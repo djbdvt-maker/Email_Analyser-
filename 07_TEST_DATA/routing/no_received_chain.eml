@@ -1,0 +1,8 @@
+Message-ID: <no-chain-0001@example.com>
+Date: Fri, 12 Sep 2025 03:15:00 -0700
+From: Bob Sender <bob.sender@example.com>
+To: Alice Recipient <alice.recipient@example.com>
+Subject: Test message with no routing headers
+Content-Type: text/plain; charset="UTF-8"
+
+This message was constructed without any Received headers.

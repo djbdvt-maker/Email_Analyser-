@@ -1,0 +1,25 @@
+Delivered-To: alice.recipient@gmail.com
+Received: by 2002:a05:6902:100a:b0:d0a:1234:5678 with SMTP id abcd1234;
+        Fri, 12 Sep 2025 03:15:22 -0700 (PDT)
+X-Received: by 2002:a17:907:1c0a:b0:a12:3456:789a with SMTP id
+ xyz9876543210abc;
+        Fri, 12 Sep 2025 03:15:21 -0700 (PDT)
+Received: from mail-sor-f41.google.com (mail-sor-f41.google.com. [209.85.220.41])
+        by mx.google.com with SMTPS id abc123 (version=TLS1_3);
+        Fri, 12 Sep 2025 03:15:20 -0700 (PDT)
+Received-SPF: pass (google.com: domain of bob.sender@gmail.com designates 209.85.220.41 as permitted sender)
+Received: from sender-relay.gmail.com (sender-relay.gmail.com. [64.233.170.51])
+        by mail-sor-f41.google.com with SMTP id qwe456;
+        Fri, 12 Sep 2025 03:15:18 -0700 (PDT)
+Message-ID: <CAExample1234567890@mail.gmail.com>
+Date: Fri, 12 Sep 2025 03:15:15 -0700
+From: Bob Sender <bob.sender@gmail.com>
+To: Alice Recipient <alice.recipient@gmail.com>
+Subject: Weekend plans
+Content-Type: text/plain; charset="UTF-8"
+
+Hey Alice,
+
+Are we still on for Saturday? Let me know.
+
+Bob

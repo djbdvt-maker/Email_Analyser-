@@ -1,0 +1,936 @@
+{
+  "compiled_at": "2026-09-19T19:11:29Z",
+  "compiler_version": "hopzero-compiler-v1.0.0",
+  "floors": [
+    {
+      "description": "Protected-brand lookalike domain + explicit claim representing brand",
+      "floor_id": "CF-01",
+      "operator": "AND",
+      "requirements": [
+        {
+          "min_strength": "Moderate",
+          "qualification_code": "PROTECTED_BRAND_LOOKALIKE_DOMAIN"
+        },
+        {
+          "min_strength": "Moderate",
+          "qualification_code": "EXPLICIT_BRAND_REPRESENTATION_CLAIM"
+        }
+      ],
+      "target_severity": "High"
+    },
+    {
+      "description": "Executive impersonation + financial/payment request",
+      "floor_id": "CF-02",
+      "operator": "AND",
+      "requirements": [
+        {
+          "min_strength": "Moderate",
+          "qualification_code": "EXECUTIVE_IMPERSONATION"
+        },
+        {
+          "min_strength": "Moderate",
+          "qualification_code": "FINANCIAL_REQUEST"
+        }
+      ],
+      "target_severity": "High"
+    },
+    {
+      "description": "Credential-phishing link + identity anomaly",
+      "floor_id": "CF-03",
+      "operator": "AND",
+      "requirements": [
+        {
+          "min_strength": "Moderate",
+          "qualification_code": "CREDENTIAL_PHISHING_LINK"
+        },
+        {
+          "min_strength": "Moderate",
+          "qualification_code": "IDENTITY_ANOMALY"
+        }
+      ],
+      "target_severity": "High"
+    },
+    {
+      "description": "Suspicious attachment + sender identity context",
+      "floor_id": "CF-04",
+      "operator": "AND",
+      "requirements": [
+        {
+          "min_strength": "Moderate",
+          "qualification_code": "SUSPICIOUS_ATTACHMENT"
+        },
+        {
+          "min_strength": "Moderate",
+          "qualification_code": "IDENTITY_ANOMALY"
+        }
+      ],
+      "target_severity": "High"
+    },
+    {
+      "description": "Exact confirmed malicious indicator",
+      "floor_id": "CF-05",
+      "operator": "AND",
+      "requirements": [
+        {
+          "min_strength": "Strong",
+          "qualification_code": "CONFIRMED_MALICIOUS_INDICATOR"
+        }
+      ],
+      "target_severity": "High"
+    },
+    {
+      "description": "Qualified routing fabrication",
+      "floor_id": "CF-06",
+      "operator": "OR",
+      "requirements": [
+        {
+          "min_strength": "Moderate",
+          "qualification_code": "ROUTING_FABRICATION_QUALIFIED"
+        },
+        {
+          "min_strength": "Moderate",
+          "qualification_code": "CF-06:TEMPORAL_CONTRADICTION_BEYOND_TOLERANCE"
+        },
+        {
+          "min_strength": "Moderate",
+          "qualification_code": "CF-06:INDEPENDENT_TRUSTED_CONTRADICTION"
+        },
+        {
+          "min_strength": "Moderate",
+          "qualification_code": "CF-06:STRUCTURAL_IMPLAUSIBILITY"
+        }
+      ],
+      "target_severity": "High"
+    }
+  ],
+  "pattern_sets": {},
+  "qualifications": [
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "archive_depth_or_size_limit_exceeded"
+      ],
+      "base_weight": 0,
+      "category": "Attachment",
+      "default_strength": "Weak",
+      "maximum_strength": "Weak",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "ARCHIVE_TRUNCATED_OR_OVERSIZED",
+      "scoring_role": "evidence_only",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "auth_path_on_unrelated_domain"
+      ],
+      "base_weight": 0,
+      "category": "URL",
+      "default_strength": "Moderate",
+      "maximum_strength": "Moderate",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "AUTH_LIKE_PATH_DETECTED",
+      "scoring_role": "evidence_only",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "bulletproof_hosting_network_match"
+      ],
+      "base_weight": 9,
+      "category": "Infrastructure",
+      "default_strength": "Moderate",
+      "maximum_strength": "Moderate",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "BULLETPROOF_HOSTING_MATCH",
+      "scoring_role": "scoreable",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "independent_trusted_contradiction"
+      ],
+      "base_weight": 0,
+      "category": "Routing",
+      "default_strength": "Strong",
+      "maximum_strength": "Strong",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "CF-06:INDEPENDENT_TRUSTED_CONTRADICTION",
+      "scoring_role": "evidence_only",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "structural_implausibility"
+      ],
+      "base_weight": 0,
+      "category": "Routing",
+      "default_strength": "Strong",
+      "maximum_strength": "Strong",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "CF-06:STRUCTURAL_IMPLAUSIBILITY",
+      "scoring_role": "evidence_only",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "temporal_contradiction_beyond_tolerance"
+      ],
+      "base_weight": 0,
+      "category": "Routing",
+      "default_strength": "Strong",
+      "maximum_strength": "Strong",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "CF-06:TEMPORAL_CONTRADICTION_BEYOND_TOLERANCE",
+      "scoring_role": "evidence_only",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "exact_confirmed_malicious_indicator",
+        "offline_blocklist_url_match"
+      ],
+      "base_weight": 24,
+      "category": "Threat Intelligence",
+      "default_strength": "Strong",
+      "maximum_strength": "Strong",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "CONFIRMED_MALICIOUS_INDICATOR",
+      "scoring_role": "scoreable",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": true,
+      "allowed_claim_signatures": [
+        "credential_harvesting_link"
+      ],
+      "base_weight": 22,
+      "category": "URL",
+      "default_strength": "Moderate",
+      "maximum_strength": "Strong",
+      "produced_by_allowed": [
+        "ai_reasoner",
+        "deterministic"
+      ],
+      "qualification_code": "CREDENTIAL_PHISHING_LINK",
+      "scoring_role": "scoreable",
+      "validity_requirements": {
+        "disqualifier_phrases": [
+          "training material",
+          "example link",
+          "phishing simulation",
+          "security awareness"
+        ]
+      },
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "dkim_signature_fail"
+      ],
+      "base_weight": 6,
+      "category": "Authentication",
+      "default_strength": "Moderate",
+      "maximum_strength": "Moderate",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "DKIM_FAIL",
+      "scoring_role": "scoreable",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "dkim_signature_none"
+      ],
+      "base_weight": 0,
+      "category": "Authentication",
+      "default_strength": "Weak",
+      "maximum_strength": "Weak",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "DKIM_NONE",
+      "scoring_role": "evidence_only",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "dmarc_validation_fail"
+      ],
+      "base_weight": 8,
+      "category": "Authentication",
+      "default_strength": "Moderate",
+      "maximum_strength": "Moderate",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "DMARC_FAIL",
+      "scoring_role": "scoreable",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "dmarc_policy_none"
+      ],
+      "base_weight": 0,
+      "category": "Authentication",
+      "default_strength": "Weak",
+      "maximum_strength": "Weak",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "DMARC_NONE",
+      "scoring_role": "evidence_only",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "double_compound_file_extension"
+      ],
+      "base_weight": 6,
+      "category": "Attachment",
+      "default_strength": "Strong",
+      "maximum_strength": "Strong",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "DOUBLE_COMPOUND_EXTENSION",
+      "scoring_role": "scoreable",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "archive_contains_executable"
+      ],
+      "base_weight": 16,
+      "category": "Attachment",
+      "default_strength": "Moderate",
+      "maximum_strength": "Moderate",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "EXECUTABLE_IN_ARCHIVE",
+      "scoring_role": "scoreable",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": true,
+      "allowed_claim_signatures": [
+        "executive_display_name_claim"
+      ],
+      "base_weight": 16,
+      "category": "Identity",
+      "default_strength": "Moderate",
+      "maximum_strength": "Strong",
+      "produced_by_allowed": [
+        "ai_reasoner",
+        "deterministic"
+      ],
+      "qualification_code": "EXECUTIVE_IMPERSONATION",
+      "scoring_role": "scoreable",
+      "strength_rules": [
+        {
+          "predicate_names": [
+            "display_name_mismatch_confirmed"
+          ],
+          "target_strength": "Strong"
+        }
+      ],
+      "validity_requirements": {
+        "disqualifier_phrases": [
+          "example signature block",
+          "training material"
+        ]
+      },
+      "version": "v1"
+    },
+    {
+      "ai_eligible": true,
+      "allowed_claim_signatures": [
+        "explicit_brand_claim"
+      ],
+      "base_weight": 15,
+      "category": "Identity",
+      "default_strength": "Moderate",
+      "maximum_strength": "Strong",
+      "produced_by_allowed": [
+        "ai_reasoner",
+        "deterministic"
+      ],
+      "qualification_code": "EXPLICIT_BRAND_REPRESENTATION_CLAIM",
+      "scoring_role": "scoreable",
+      "validity_requirements": {
+        "disqualifier_phrases": [
+          "example signature block",
+          "training material"
+        ]
+      },
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "extension_mime_type_mismatch"
+      ],
+      "base_weight": 7,
+      "category": "Attachment",
+      "default_strength": "Moderate",
+      "maximum_strength": "Moderate",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "EXTENSION_MIME_MISMATCH",
+      "scoring_role": "scoreable",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": true,
+      "allowed_claim_signatures": [
+        "payment_transfer_request",
+        "invoice_change_request"
+      ],
+      "base_weight": 8,
+      "category": "Social Engineering",
+      "default_strength": "Moderate",
+      "maximum_strength": "Strong",
+      "produced_by_allowed": [
+        "ai_reasoner",
+        "deterministic"
+      ],
+      "qualification_code": "FINANCIAL_REQUEST",
+      "scoring_role": "scoreable",
+      "strength_rules": [
+        {
+          "predicate_names": [
+            "explicit_payment_action",
+            "monetary_amount_or_account_present"
+          ],
+          "target_strength": "Strong"
+        }
+      ],
+      "validity_requirements": {
+        "disqualifier_phrases": [
+          "testing whether",
+          "test whether",
+          "security awareness",
+          "recognize requests",
+          "recognize this",
+          "this is a simulated",
+          "this is a test",
+          "training exercise",
+          "phishing simulation",
+          "example of a phishing"
+        ]
+      },
+      "version": "v1"
+    },
+    {
+      "ai_eligible": true,
+      "allowed_claim_signatures": [
+        "generic_suspicious_content"
+      ],
+      "base_weight": 0,
+      "category": "Social Engineering",
+      "default_strength": "Weak",
+      "maximum_strength": "Weak",
+      "produced_by_allowed": [
+        "ai_reasoner",
+        "deterministic"
+      ],
+      "qualification_code": "GENERIC_SUSPICION",
+      "scoring_role": "evidence_only",
+      "validity_requirements": {
+        "disqualifier_phrases": []
+      },
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "homoglyph_brand_match"
+      ],
+      "base_weight": 9,
+      "category": "Domain",
+      "default_strength": "Moderate",
+      "maximum_strength": "Strong",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "HOMOGLYPH_DOMAIN_MATCH",
+      "scoring_role": "scoreable",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "identifier_alignment_mismatch"
+      ],
+      "base_weight": 8,
+      "category": "Authentication",
+      "default_strength": "Moderate",
+      "maximum_strength": "Moderate",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "IDENTIFIER_ALIGNMENT_FAILURE",
+      "scoring_role": "scoreable",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "sender_identity_anomaly"
+      ],
+      "base_weight": 15,
+      "category": "Identity",
+      "default_strength": "Moderate",
+      "maximum_strength": "Strong",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "IDENTITY_ANOMALY",
+      "scoring_role": "scoreable",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "display_name_sender_mismatch"
+      ],
+      "base_weight": 0,
+      "category": "Identity",
+      "default_strength": "Weak",
+      "maximum_strength": "Weak",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "IDENTITY_DISPLAY_NAME_MISMATCH",
+      "scoring_role": "evidence_only",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "reply_to_from_mismatch"
+      ],
+      "base_weight": 0,
+      "category": "Identity",
+      "default_strength": "Moderate",
+      "maximum_strength": "Moderate",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "IDENTITY_REPLY_TO_MISMATCH",
+      "scoring_role": "evidence_only",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "return_path_from_mismatch"
+      ],
+      "base_weight": 0,
+      "category": "Identity",
+      "default_strength": "Moderate",
+      "maximum_strength": "Moderate",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "IDENTITY_RETURN_PATH_MISMATCH",
+      "scoring_role": "evidence_only",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "origin_ip_in_known_bad_asn"
+      ],
+      "base_weight": 8,
+      "category": "Infrastructure",
+      "default_strength": "Moderate",
+      "maximum_strength": "Moderate",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "KNOWN_BAD_ASN",
+      "scoring_role": "scoreable",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "malware_signature_match"
+      ],
+      "base_weight": 40,
+      "category": "Attachment",
+      "default_strength": "Strong",
+      "maximum_strength": "Strong",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "KNOWN_MALWARE_SIGNATURE",
+      "scoring_role": "scoreable",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "visible_text_href_mismatch"
+      ],
+      "base_weight": 8,
+      "category": "URL",
+      "default_strength": "Weak",
+      "maximum_strength": "Weak",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "LINK_DISPLAY_HREF_MISMATCH",
+      "scoring_role": "scoreable",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "macro_enabled_office_document"
+      ],
+      "base_weight": 7,
+      "category": "Attachment",
+      "default_strength": "Moderate",
+      "maximum_strength": "Moderate",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "MACRO_ENABLED_DOCUMENT",
+      "scoring_role": "scoreable",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "mixed_script_domain_present"
+      ],
+      "base_weight": 7,
+      "category": "Domain",
+      "default_strength": "Weak",
+      "maximum_strength": "Moderate",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "MIXED_SCRIPT_DOMAIN",
+      "scoring_role": "scoreable",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "first_time_observed_ip_or_subnet"
+      ],
+      "base_weight": 5,
+      "category": "Infrastructure",
+      "default_strength": "Weak",
+      "maximum_strength": "Weak",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "NEWLY_OBSERVED_INFRASTRUCTURE",
+      "scoring_role": "scoreable",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "domain_age_under_threshold"
+      ],
+      "base_weight": 5,
+      "category": "Domain",
+      "default_strength": "Weak",
+      "maximum_strength": "Weak",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "NEWLY_REGISTERED_DOMAIN",
+      "scoring_role": "scoreable",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "qualified_protected_brand_lookalike"
+      ],
+      "base_weight": 15,
+      "category": "Domain",
+      "default_strength": "Moderate",
+      "maximum_strength": "Strong",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "PROTECTED_BRAND_LOOKALIKE_DOMAIN",
+      "scoring_role": "scoreable",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "brand_lookalike_in_url"
+      ],
+      "base_weight": 13,
+      "category": "URL",
+      "default_strength": "Moderate",
+      "maximum_strength": "Strong",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "PROTECTED_BRAND_LOOKALIKE_URL",
+      "scoring_role": "scoreable",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "punycode_domain_present"
+      ],
+      "base_weight": 0,
+      "category": "Domain",
+      "default_strength": "Weak",
+      "maximum_strength": "Weak",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "PUNYCODE_DOMAIN_INDICATOR",
+      "scoring_role": "evidence_only",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "qualified_routing_fabrication"
+      ],
+      "base_weight": 20,
+      "category": "Routing",
+      "default_strength": "Moderate",
+      "maximum_strength": "Strong",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "ROUTING_FABRICATION_QUALIFIED",
+      "scoring_role": "scoreable",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "spf_validation_fail"
+      ],
+      "base_weight": 6,
+      "category": "Authentication",
+      "default_strength": "Moderate",
+      "maximum_strength": "Moderate",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "SPF_FAIL",
+      "scoring_role": "scoreable",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "spf_record_none"
+      ],
+      "base_weight": 0,
+      "category": "Authentication",
+      "default_strength": "Weak",
+      "maximum_strength": "Weak",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "SPF_NONE",
+      "scoring_role": "evidence_only",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "suspicious_executable_attachment"
+      ],
+      "base_weight": 14,
+      "category": "Attachment",
+      "default_strength": "Moderate",
+      "maximum_strength": "Strong",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "SUSPICIOUS_ATTACHMENT",
+      "scoring_role": "scoreable",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "missing_or_unresolvable_ptr_record"
+      ],
+      "base_weight": 0,
+      "category": "Infrastructure",
+      "default_strength": "Weak",
+      "maximum_strength": "Weak",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "UNRESOLVABLE_REVERSE_DNS",
+      "scoring_role": "evidence_only",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "urgency_authority_attachment_name"
+      ],
+      "base_weight": 0,
+      "category": "Attachment",
+      "default_strength": "Weak",
+      "maximum_strength": "Weak",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "URGENCY_AUTHORITY_FILENAME",
+      "scoring_role": "evidence_only",
+      "validity_requirements": null,
+      "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [
+        "known_url_shortener"
+      ],
+      "base_weight": 0,
+      "category": "URL",
+      "default_strength": "Weak",
+      "maximum_strength": "Weak",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "URL_SHORTENER_DETECTED",
+      "scoring_role": "evidence_only",
+      "validity_requirements": null,
+      "version": "v1"
+    }
+  ],
+  "registry_version": "v1",
+  "scoring_buckets": [
+    {
+      "bucket_id": "attachment",
+      "category": "Attachment",
+      "max_strength": "Strong",
+      "point_cap": 20
+    },
+    {
+      "bucket_id": "authentication",
+      "category": "Authentication",
+      "max_strength": "Strong",
+      "point_cap": 16
+    },
+    {
+      "bucket_id": "domain",
+      "category": "Domain",
+      "max_strength": "Strong",
+      "point_cap": 16
+    },
+    {
+      "bucket_id": "identity",
+      "category": "Identity",
+      "max_strength": "Strong",
+      "point_cap": 20
+    },
+    {
+      "bucket_id": "infrastructure",
+      "category": "Infrastructure",
+      "max_strength": "Strong",
+      "point_cap": 14
+    },
+    {
+      "bucket_id": "routing",
+      "category": "Routing",
+      "max_strength": "Strong",
+      "point_cap": 20
+    },
+    {
+      "bucket_id": "social_engineering",
+      "category": "Social Engineering",
+      "max_strength": "Strong",
+      "point_cap": 14
+    },
+    {
+      "bucket_id": "threat_intelligence",
+      "category": "Threat Intelligence",
+      "max_strength": "Strong",
+      "point_cap": 24
+    },
+    {
+      "bucket_id": "url",
+      "category": "URL",
+      "max_strength": "Strong",
+      "point_cap": 22
+    }
+  ]
+}

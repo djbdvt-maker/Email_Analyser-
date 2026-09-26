@@ -1,0 +1,14 @@
+Received: from mail-sor-f41.google.com (mail-sor-f41.google.com. [209.85.220.41])
+        by mx.google.com with SMTPS id abc123 (version=TLS1_3);
+        Fri, 12 Sep 2025 03:15:22 -0700 (PDT)
+Received: from totally-unrelated-host.example (totally-unrelated-host.example [198.51.100.9])
+        by relay-node-9.outlook.com with SMTP id qwe456;
+        Fri, 12 Sep 2025 03:15:18 -0700 (PDT)
+Message-ID: <adversarial-struct-0001@example.com>
+Date: Fri, 12 Sep 2025 03:15:10 -0700
+From: Bob Sender <bob.sender@gmail.com>
+To: Alice Recipient <alice.recipient@gmail.com>
+Subject: Account verification needed
+Content-Type: text/plain; charset="UTF-8"
+
+Please verify your account using the link below.

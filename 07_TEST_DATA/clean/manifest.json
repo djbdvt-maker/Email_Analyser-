@@ -1,0 +1,10 @@
+{
+  "scenario": "clean_legit_corporate",
+  "category": "clean",
+  "description": "Legitimate internal corporate email with full SPF, DKIM, and DMARC passing and alignment",
+  "files": ["clean_legit_corporate.eml"],
+  "expected_verdict": "likely_benign",
+  "expected_severity": "Clean",
+  "expected_floors_triggered": [],
+  "expected_score_range": [0, 20]
+}

@@ -1,0 +1,10 @@
+{
+  "scenario": "double_extension_macro",
+  "category": "attachments",
+  "description": "Suspicious email carrying dangerous attachment with double extension (.pdf.xlsm) and urgency naming",
+  "files": ["double_extension_macro.eml"],
+  "expected_verdict": "suspicious_attachment_malware_delivery",
+  "expected_severity": "High",
+  "expected_floors_triggered": ["CF-04"],
+  "expected_score_range": [60, 100]
+}

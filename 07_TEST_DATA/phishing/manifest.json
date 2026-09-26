@@ -1,0 +1,10 @@
+{
+  "scenario": "credential_harvesting_portal",
+  "category": "phishing",
+  "description": "Credential harvesting lure mimicking Microsoft login with anchor text display vs href destination mismatch",
+  "files": ["credential_harvesting_portal.eml"],
+  "expected_verdict": "credential_phishing",
+  "expected_severity": "High",
+  "expected_floors_triggered": ["CF-03"],
+  "expected_score_range": [60, 100]
+}

@@ -1,0 +1,28 @@
+Received: from DM6PR07MB5678.namprd07.prod.outlook.com (2603:10b6:5:1a3::12)
+ by DM6PR07MB5432.namprd07.prod.outlook.com with HTTPS;
+ Fri, 12 Sep 2025 10:05:11 +0000
+Received: from CO1NAM11FT045.eop-nam11.prod.protection.outlook.com
+ (2603:10a6:7:8f::20) by DM6PR07MB5678.namprd07.prod.outlook.com with
+ Microsoft SMTP Server (version=TLS1_2); Fri, 12 Sep 2025 10:05:09 +0000
+Authentication-Results: spf=pass (sender IP is 40.107.23.51)
+ smtp.mailfrom=contoso.com; dkim=pass (signature was verified)
+ header.d=contoso.com;dmarc=pass action=none header.from=contoso.com;
+Received-SPF: Pass (protection.outlook.com: domain of contoso.com
+ designates 40.107.23.51 as permitted sender)
+ receiver=protection.outlook.com;
+Received: from NAM11-CO1-obe.outbound.protection.outlook.com (40.107.23.51)
+ by CO1NAM11FT045.mail.protection.outlook.com with Microsoft SMTP Server
+ (version=TLS1_2) id 15.20.1234.12;
+ Fri, 12 Sep 2025 10:05:07 +0000
+Message-ID: <DM6PR07MB5678EXAMPLE1234@namprd07.prod.outlook.com>
+Date: Fri, 12 Sep 2025 10:05:00 +0000
+From: Carol Manager <carol.manager@contoso.com>
+To: Dave Employee <dave.employee@contoso.com>
+Subject: Q3 planning doc
+Content-Type: text/plain; charset="UTF-8"
+
+Hi Dave,
+
+Attaching notes from today's sync. Let's review Monday.
+
+Carol

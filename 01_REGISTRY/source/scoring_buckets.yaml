@@ -1,0 +1,36 @@
+- bucket_id: identity
+  category: Identity
+  point_cap: 20
+  max_strength: Strong
+- bucket_id: authentication
+  category: Authentication
+  point_cap: 16
+  max_strength: Strong
+- bucket_id: domain
+  category: Domain
+  point_cap: 16
+  max_strength: Strong
+- bucket_id: url
+  category: URL
+  point_cap: 22
+  max_strength: Strong
+- bucket_id: attachment
+  category: Attachment
+  point_cap: 20
+  max_strength: Strong
+- bucket_id: infrastructure
+  category: Infrastructure
+  point_cap: 14
+  max_strength: Strong
+- bucket_id: routing
+  category: Routing
+  point_cap: 20
+  max_strength: Strong
+- bucket_id: social_engineering
+  category: Social Engineering
+  point_cap: 14
+  max_strength: Strong
+- bucket_id: threat_intelligence
+  category: Threat Intelligence
+  point_cap: 24
+  max_strength: Strong

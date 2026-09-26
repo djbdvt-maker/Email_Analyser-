@@ -1,0 +1,56 @@
+- floor_id: CF-01
+  description: Protected-brand lookalike domain + explicit claim representing brand
+  target_severity: High
+  operator: AND
+  requirements:
+  - qualification_code: PROTECTED_BRAND_LOOKALIKE_DOMAIN
+    min_strength: Moderate
+  - qualification_code: EXPLICIT_BRAND_REPRESENTATION_CLAIM
+    min_strength: Moderate
+- floor_id: CF-02
+  description: Executive impersonation + financial/payment request
+  target_severity: High
+  operator: AND
+  requirements:
+  - qualification_code: EXECUTIVE_IMPERSONATION
+    min_strength: Moderate
+  - qualification_code: FINANCIAL_REQUEST
+    min_strength: Moderate
+- floor_id: CF-03
+  description: Credential-phishing link + identity anomaly
+  target_severity: High
+  operator: AND
+  requirements:
+  - qualification_code: CREDENTIAL_PHISHING_LINK
+    min_strength: Moderate
+  - qualification_code: IDENTITY_ANOMALY
+    min_strength: Moderate
+- floor_id: CF-04
+  description: Suspicious attachment + sender identity context
+  target_severity: High
+  operator: AND
+  requirements:
+  - qualification_code: SUSPICIOUS_ATTACHMENT
+    min_strength: Moderate
+  - qualification_code: IDENTITY_ANOMALY
+    min_strength: Moderate
+- floor_id: CF-05
+  description: Exact confirmed malicious indicator
+  target_severity: High
+  operator: AND
+  requirements:
+  - qualification_code: CONFIRMED_MALICIOUS_INDICATOR
+    min_strength: Strong
+- floor_id: CF-06
+  description: Qualified routing fabrication
+  target_severity: High
+  operator: OR
+  requirements:
+  - qualification_code: ROUTING_FABRICATION_QUALIFIED
+    min_strength: Moderate
+  - qualification_code: CF-06:TEMPORAL_CONTRADICTION_BEYOND_TOLERANCE
+    min_strength: Moderate
+  - qualification_code: CF-06:INDEPENDENT_TRUSTED_CONTRADICTION
+    min_strength: Moderate
+  - qualification_code: CF-06:STRUCTURAL_IMPLAUSIBILITY
+    min_strength: Moderate

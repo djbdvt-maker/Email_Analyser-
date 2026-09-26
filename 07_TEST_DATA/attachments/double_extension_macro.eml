@@ -1,0 +1,27 @@
+Received: from mail.attacker-vps.org (mail.attacker-vps.org [198.51.100.88])
+	by mx.google.com with ESMTPS id att123
+	for <accounting@example.com>;
+	Sun, 13 Sep 2026 14:00:00 -0700
+Authentication-Results: mx.google.com;
+	spf=fail;
+	dkim=none;
+	dmarc=none
+From: "Billing Department" <invoices@vendor-update-services.net>
+To: <accounting@example.com>
+Subject: OVERDUE INVOICE #9982 - IMMEDIATE PAYMENT REQUIRED
+Date: Sun, 13 Sep 2026 14:00:00 -0700
+Message-ID: <att-malware-001@vendor-update-services.net>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============BOUNDARY12345=="
+
+--===============BOUNDARY12345==
+Content-Type: text/plain; charset=UTF-8
+
+Please find attached overdue invoice. Enable macros to review the breakdown.
+--===============BOUNDARY12345==
+Content-Type: application/vnd.ms-excel.sheet.macroEnabled.12
+Content-Disposition: attachment; filename="INVOICE_PAST_DUE.pdf.xlsm"
+Content-Transfer-Encoding: base64
+
+UEsDBBQAAAAIAAAAAAAAAAAAAAAAAAAAAAA=
+--===============BOUNDARY12345==--

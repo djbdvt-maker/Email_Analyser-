@@ -1,0 +1,31 @@
+Received: from mail.foreign-hoster.net (mail.foreign-hoster.net [198.51.100.33])
+	by mx.google.com with ESMTPS id b123xyz
+	for <finance@acmecorp.example>;
+	Sun, 13 Sep 2026 11:15:00 -0700
+Authentication-Results: mx.google.com;
+	dkim=fail header.i=@acmecorp.example;
+	spf=fail (google.com: domain of k.whitfield@acmecorp.example does not designate 198.51.100.33 as permitted sender) smtp.mailfrom=k.whitfield@acmecorp.example;
+	dmarc=fail (p=REJECT) header.from=acmecorp.example
+From: "Ken Whitfield, CEO" <k.whitfield@acmecorp.example>
+Reply-To: "Ken Whitfield" <ceo.confidential99@gmail.com>
+To: "Finance Team" <finance@acmecorp.example>
+Subject: Urgent Confidential Wire Request - Acquisition
+Date: Sun, 13 Sep 2026 11:15:00 -0700
+Message-ID: <bec-transfer-9876@acmecorp.example>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+
+Finance Team,
+
+I am currently in an urgent acquisition meeting with counsel and cannot take calls.
+Please initiate a confidential wire transfer of $85,000 immediately to the escrow account details below.
+Do not call to verify as I am in discussions.
+
+Account: 8829-1029-4411
+Routing: 021000021
+
+Send confirmation receipt once processed.
+
+Ken Whitfield
+Chief Executive Officer
+Acme Corporation

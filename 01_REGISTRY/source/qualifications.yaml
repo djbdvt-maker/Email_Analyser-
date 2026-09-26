@@ -1,0 +1,586 @@
+- qualification_code: GENERIC_SUSPICION
+  category: Social Engineering
+  version: v1
+  ai_eligible: true
+  produced_by_allowed:
+  - ai_reasoner
+  - deterministic
+  validity_requirements:
+    disqualifier_phrases: []
+  allowed_claim_signatures:
+  - generic_suspicious_content
+  default_strength: Weak
+  maximum_strength: Weak
+  scoring_role: evidence_only
+  base_weight: 0
+- qualification_code: FINANCIAL_REQUEST
+  category: Social Engineering
+  version: v1
+  ai_eligible: true
+  produced_by_allowed:
+  - ai_reasoner
+  - deterministic
+  validity_requirements:
+    disqualifier_phrases:
+    - testing whether
+    - test whether
+    - security awareness
+    - recognize requests
+    - recognize this
+    - this is a simulated
+    - this is a test
+    - training exercise
+    - phishing simulation
+    - example of a phishing
+  allowed_claim_signatures:
+  - payment_transfer_request
+  - invoice_change_request
+  default_strength: Moderate
+  maximum_strength: Strong
+  strength_rules:
+  - target_strength: Strong
+    predicate_names:
+    - explicit_payment_action
+    - monetary_amount_or_account_present
+  scoring_role: scoreable
+  base_weight: 8
+- qualification_code: EXECUTIVE_IMPERSONATION
+  category: Identity
+  version: v1
+  ai_eligible: true
+  produced_by_allowed:
+  - ai_reasoner
+  - deterministic
+  validity_requirements:
+    disqualifier_phrases:
+    - example signature block
+    - training material
+  allowed_claim_signatures:
+  - executive_display_name_claim
+  default_strength: Moderate
+  maximum_strength: Strong
+  strength_rules:
+  - target_strength: Strong
+    predicate_names:
+    - display_name_mismatch_confirmed
+  scoring_role: scoreable
+  base_weight: 16
+- qualification_code: EXPLICIT_BRAND_REPRESENTATION_CLAIM
+  category: Identity
+  version: v1
+  ai_eligible: true
+  produced_by_allowed:
+  - ai_reasoner
+  - deterministic
+  validity_requirements:
+    disqualifier_phrases:
+    - example signature block
+    - training material
+  allowed_claim_signatures:
+  - explicit_brand_claim
+  default_strength: Moderate
+  maximum_strength: Strong
+  scoring_role: scoreable
+  base_weight: 15
+- qualification_code: IDENTITY_ANOMALY
+  category: Identity
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - sender_identity_anomaly
+  default_strength: Moderate
+  maximum_strength: Strong
+  scoring_role: scoreable
+  base_weight: 15
+- qualification_code: IDENTITY_DISPLAY_NAME_MISMATCH
+  category: Identity
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - display_name_sender_mismatch
+  default_strength: Weak
+  maximum_strength: Weak
+  scoring_role: evidence_only
+  base_weight: 0
+- qualification_code: IDENTITY_REPLY_TO_MISMATCH
+  category: Identity
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - reply_to_from_mismatch
+  default_strength: Moderate
+  maximum_strength: Moderate
+  scoring_role: evidence_only
+  base_weight: 0
+- qualification_code: IDENTITY_RETURN_PATH_MISMATCH
+  category: Identity
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - return_path_from_mismatch
+  default_strength: Moderate
+  maximum_strength: Moderate
+  scoring_role: evidence_only
+  base_weight: 0
+- qualification_code: DMARC_FAIL
+  category: Authentication
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - dmarc_validation_fail
+  default_strength: Moderate
+  maximum_strength: Moderate
+  scoring_role: scoreable
+  base_weight: 8
+- qualification_code: DMARC_NONE
+  category: Authentication
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - dmarc_policy_none
+  default_strength: Weak
+  maximum_strength: Weak
+  scoring_role: evidence_only
+  base_weight: 0
+- qualification_code: SPF_FAIL
+  category: Authentication
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - spf_validation_fail
+  default_strength: Moderate
+  maximum_strength: Moderate
+  scoring_role: scoreable
+  base_weight: 6
+- qualification_code: SPF_NONE
+  category: Authentication
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - spf_record_none
+  default_strength: Weak
+  maximum_strength: Weak
+  scoring_role: evidence_only
+  base_weight: 0
+- qualification_code: DKIM_FAIL
+  category: Authentication
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - dkim_signature_fail
+  default_strength: Moderate
+  maximum_strength: Moderate
+  scoring_role: scoreable
+  base_weight: 6
+- qualification_code: DKIM_NONE
+  category: Authentication
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - dkim_signature_none
+  default_strength: Weak
+  maximum_strength: Weak
+  scoring_role: evidence_only
+  base_weight: 0
+- qualification_code: IDENTIFIER_ALIGNMENT_FAILURE
+  category: Authentication
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - identifier_alignment_mismatch
+  default_strength: Moderate
+  maximum_strength: Moderate
+  scoring_role: scoreable
+  base_weight: 8
+- qualification_code: PROTECTED_BRAND_LOOKALIKE_DOMAIN
+  category: Domain
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - qualified_protected_brand_lookalike
+  default_strength: Moderate
+  maximum_strength: Strong
+  scoring_role: scoreable
+  base_weight: 15
+- qualification_code: PUNYCODE_DOMAIN_INDICATOR
+  category: Domain
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - punycode_domain_present
+  default_strength: Weak
+  maximum_strength: Weak
+  scoring_role: evidence_only
+  base_weight: 0
+- qualification_code: MIXED_SCRIPT_DOMAIN
+  category: Domain
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - mixed_script_domain_present
+  default_strength: Weak
+  maximum_strength: Moderate
+  scoring_role: scoreable
+  base_weight: 7
+- qualification_code: HOMOGLYPH_DOMAIN_MATCH
+  category: Domain
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - homoglyph_brand_match
+  default_strength: Moderate
+  maximum_strength: Strong
+  scoring_role: scoreable
+  base_weight: 9
+- qualification_code: NEWLY_REGISTERED_DOMAIN
+  category: Domain
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - domain_age_under_threshold
+  default_strength: Weak
+  maximum_strength: Weak
+  scoring_role: scoreable
+  base_weight: 5
+- qualification_code: CREDENTIAL_PHISHING_LINK
+  category: URL
+  version: v1
+  ai_eligible: true
+  produced_by_allowed:
+  - ai_reasoner
+  - deterministic
+  validity_requirements:
+    disqualifier_phrases:
+    - training material
+    - example link
+    - phishing simulation
+    - security awareness
+  allowed_claim_signatures:
+  - credential_harvesting_link
+  default_strength: Moderate
+  maximum_strength: Strong
+  scoring_role: scoreable
+  base_weight: 22
+- qualification_code: LINK_DISPLAY_HREF_MISMATCH
+  category: URL
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - visible_text_href_mismatch
+  default_strength: Weak
+  maximum_strength: Weak
+  scoring_role: scoreable
+  base_weight: 8
+- qualification_code: URL_SHORTENER_DETECTED
+  category: URL
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - known_url_shortener
+  default_strength: Weak
+  maximum_strength: Weak
+  scoring_role: evidence_only
+  base_weight: 0
+- qualification_code: AUTH_LIKE_PATH_DETECTED
+  category: URL
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - auth_path_on_unrelated_domain
+  default_strength: Moderate
+  maximum_strength: Moderate
+  scoring_role: evidence_only
+  base_weight: 0
+- qualification_code: PROTECTED_BRAND_LOOKALIKE_URL
+  category: URL
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - brand_lookalike_in_url
+  default_strength: Moderate
+  maximum_strength: Strong
+  scoring_role: scoreable
+  base_weight: 13
+- qualification_code: CONFIRMED_MALICIOUS_INDICATOR
+  category: Threat Intelligence
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - exact_confirmed_malicious_indicator
+  - offline_blocklist_url_match
+  default_strength: Strong
+  maximum_strength: Strong
+  scoring_role: scoreable
+  base_weight: 24
+- qualification_code: SUSPICIOUS_ATTACHMENT
+  category: Attachment
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - suspicious_executable_attachment
+  default_strength: Moderate
+  maximum_strength: Strong
+  scoring_role: scoreable
+  base_weight: 14
+- qualification_code: EXTENSION_MIME_MISMATCH
+  category: Attachment
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - extension_mime_type_mismatch
+  default_strength: Moderate
+  maximum_strength: Moderate
+  scoring_role: scoreable
+  base_weight: 7
+- qualification_code: MACRO_ENABLED_DOCUMENT
+  category: Attachment
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - macro_enabled_office_document
+  default_strength: Moderate
+  maximum_strength: Moderate
+  scoring_role: scoreable
+  base_weight: 7
+- qualification_code: EXECUTABLE_IN_ARCHIVE
+  category: Attachment
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - archive_contains_executable
+  default_strength: Moderate
+  maximum_strength: Moderate
+  scoring_role: scoreable
+  base_weight: 16
+- qualification_code: URGENCY_AUTHORITY_FILENAME
+  category: Attachment
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - urgency_authority_attachment_name
+  default_strength: Weak
+  maximum_strength: Weak
+  scoring_role: evidence_only
+  base_weight: 0
+- qualification_code: DOUBLE_COMPOUND_EXTENSION
+  category: Attachment
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - double_compound_file_extension
+  default_strength: Strong
+  maximum_strength: Strong
+  scoring_role: scoreable
+  base_weight: 6
+- qualification_code: ARCHIVE_TRUNCATED_OR_OVERSIZED
+  category: Attachment
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - archive_depth_or_size_limit_exceeded
+  default_strength: Weak
+  maximum_strength: Weak
+  scoring_role: evidence_only
+  base_weight: 0
+- qualification_code: KNOWN_BAD_ASN
+  category: Infrastructure
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - origin_ip_in_known_bad_asn
+  default_strength: Moderate
+  maximum_strength: Moderate
+  scoring_role: scoreable
+  base_weight: 8
+- qualification_code: BULLETPROOF_HOSTING_MATCH
+  category: Infrastructure
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - bulletproof_hosting_network_match
+  default_strength: Moderate
+  maximum_strength: Moderate
+  scoring_role: scoreable
+  base_weight: 9
+- qualification_code: UNRESOLVABLE_REVERSE_DNS
+  category: Infrastructure
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - missing_or_unresolvable_ptr_record
+  default_strength: Weak
+  maximum_strength: Weak
+  scoring_role: evidence_only
+  base_weight: 0
+- qualification_code: NEWLY_OBSERVED_INFRASTRUCTURE
+  category: Infrastructure
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - first_time_observed_ip_or_subnet
+  default_strength: Weak
+  maximum_strength: Weak
+  scoring_role: scoreable
+  base_weight: 5
+- qualification_code: ROUTING_FABRICATION_QUALIFIED
+  category: Routing
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - qualified_routing_fabrication
+  default_strength: Moderate
+  maximum_strength: Strong
+  scoring_role: scoreable
+  base_weight: 20
+- qualification_code: CF-06:TEMPORAL_CONTRADICTION_BEYOND_TOLERANCE
+  category: Routing
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - temporal_contradiction_beyond_tolerance
+  default_strength: Strong
+  maximum_strength: Strong
+  scoring_role: evidence_only
+  base_weight: 0
+- qualification_code: CF-06:INDEPENDENT_TRUSTED_CONTRADICTION
+  category: Routing
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - independent_trusted_contradiction
+  default_strength: Strong
+  maximum_strength: Strong
+  scoring_role: evidence_only
+  base_weight: 0
+- qualification_code: CF-06:STRUCTURAL_IMPLAUSIBILITY
+  category: Routing
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - structural_implausibility
+  default_strength: Strong
+  maximum_strength: Strong
+  scoring_role: evidence_only
+  base_weight: 0
+
+- qualification_code: KNOWN_MALWARE_SIGNATURE
+  category: Attachment
+  version: v1
+  ai_eligible: false
+  produced_by_allowed:
+  - deterministic
+  validity_requirements: null
+  allowed_claim_signatures:
+  - malware_signature_match
+  default_strength: Strong
+  maximum_strength: Strong
+  scoring_role: scoreable
+  base_weight: 40

@@ -1,0 +1,48 @@
+# ===================================================================================
+# IMPORTANT NOTE:
+# This is an older/alternative backend-only development stack (using PostgreSQL).
+# IT IS NOT THE CANONICAL DEMO STACK.
+#
+# To run the complete End-to-End HopZero Demo (Backend + Frontend + n8n AI Agent),
+# please use the main `docker-compose.yml` located in the root directory:
+#   cd ..
+#   docker compose up --build -d
+#
+# Do not run this backend compose alongside the root stack, as it will cause port
+# collisions (8000) and confusing duplicate instances.
+# ===================================================================================
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: hopzero
+      POSTGRES_PASSWORD: hopzero
+      POSTGRES_DB: hopzero
+    ports:
+      - "5432:5432"
+    volumes:
+      - hopzero_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hopzero"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg2://hopzero:hopzero@db:5432/hopzero
+      JWT_SECRET_KEY: change-me-in-production
+      ARTIFACT_STORAGE_ROOT: /app/storage/artifacts
+    ports:
+      - "8000:8000"
+    volumes:
+      - hopzero_artifacts:/app/storage/artifacts
+
+volumes:
+  hopzero_pgdata:
+  hopzero_artifacts:

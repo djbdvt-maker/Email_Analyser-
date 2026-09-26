@@ -1,0 +1,22 @@
+Received: from mx.hopzero.local (mx.hopzero.local [10.0.0.1])
+	by internal.hopzero.local (Postfix) with ESMTPS id 12345
+	for <victim@hopzero.local>; Fri, 25 Sep 2026 12:00:00 +0000 (UTC)
+Received: from evil-attacker.com (evil-attacker.com [192.168.1.100])
+	by mx.hopzero.local (Postfix) with ESMTP id 67890
+	for <victim@hopzero.local>; Fri, 25 Sep 2026 11:59:55 +0000 (UTC)
+From: "Security Team" <security@evil-attacker.com>
+To: <victim@hopzero.local>
+Subject: URGENT: Verify your account!
+Date: Fri, 25 Sep 2026 11:59:00 +0000
+Message-ID: <evil-123@evil-attacker.com>
+MIME-Version: 1.0
+Content-Type: text/html; charset="utf-8"
+
+<html>
+<body>
+<p>Hello,</p>
+<p>We detected suspicious activity. Please <b>verify your account</b> immediately!</p>
+<p><a href="http://example.com/phishing-login">click here to login</a></p>
+<p>Also, see the attached report.vbs.</p>
+</body>
+</html>

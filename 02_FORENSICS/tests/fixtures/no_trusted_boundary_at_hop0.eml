@@ -1,0 +1,12 @@
+Received: from unknown-sender.example (unknown-sender.example [203.0.113.50])
+        by some-third-party-relay.example with SMTP id abc123;
+        Fri, 12 Sep 2025 03:15:00 -0700 (PDT)
+Message-ID: <no-boundary-0001@example.com>
+Date: Fri, 12 Sep 2025 03:14:50 -0700
+From: Someone <someone@example.com>
+To: Recipient <recipient@example.com>
+Subject: Test with no trusted boundary at all
+Content-Type: text/plain; charset="UTF-8"
+
+This message's only Received header is not from any v1-recognized
+trusted receiver, so no trust boundary can be established at hop 0.

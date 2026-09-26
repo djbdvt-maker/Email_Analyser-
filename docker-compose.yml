@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: hopzero-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - HOPZERO_LLM_PROVIDER=ollama
+      - HOPZERO_LLM_BASE_URL=http://host.docker.internal:11434
+      - HOPZERO_LLM_MODEL=phi3
+      - N8N_WEBHOOK_URL=http://n8n:5678/webhook/hopzero-agent
+      - DATABASE_URL=sqlite:///./storage/hopzero.db
+      - IMAP_SERVER=${IMAP_SERVER:-}
+      - IMAP_USER=${IMAP_USER:-}
+      - IMAP_PASSWORD=${IMAP_PASSWORD:-}
+    volumes:
+      - hopzero-data:/app/03_BACKEND/storage
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: hopzero-frontend
+    ports:
+      - "5173:80"
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: hopzero-n8n
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=0.0.0.0
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+      - WEBHOOK_URL=http://localhost:5678/
+      - GENERIC_TIMEZONE=UTC
+      - HOPZERO_USERNAME=${HOPZERO_USERNAME:-}
+      - HOPZERO_PASSWORD=${HOPZERO_PASSWORD:-}
+    volumes:
+      - n8n-data:/home/node/.n8n
+    restart: unless-stopped
+
+volumes:
+  hopzero-data:
+  n8n-data:

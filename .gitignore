@@ -1,0 +1,36 @@
+# Python bytecode and cache
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node / Frontend
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Virtual environments
+.venv/
+env/
+venv/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Databases and runtime storage
+*.db
+*.sqlite3
+*.sqlite
+storage/artifacts/*
+!storage/artifacts/.gitkeep
+03_BACKEND/storage/artifacts/*
+!03_BACKEND/storage/artifacts/.gitkeep
+
+# OS artifacts
+.DS_Store
+Thumbs.db

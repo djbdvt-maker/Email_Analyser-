@@ -1,0 +1,12 @@
+Received: from mail-sor-f41.google.com (mail-sor-f41.google.com. [209.85.220.41])
+        by mx.google.com with SMTPS id abc123 (version=TLS1_3);
+        Fri, 12 Sep 2025 03:15:22 -0700 (PDT)
+Received: this header does not follow the normal from/by grammar at all ???
+Message-ID: <malformed-0001@example.com>
+Date: Fri, 12 Sep 2025 03:15:10 -0700
+From: Bob Sender <bob.sender@gmail.com>
+To: Alice Recipient <alice.recipient@gmail.com>
+Subject: Newsletter
+Content-Type: text/plain; charset="UTF-8"
+
+Just a regular newsletter with one oddly-formed relay header.

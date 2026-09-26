@@ -1,0 +1,251 @@
+{
+  "name": "HopZero Gmail Email Security Ingestion",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "q": "is:unread"
+        }
+      },
+      "id": "1",
+      "name": "Gmail Trigger (New Unread Email)",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "messageId": "={{ $json.id }}",
+        "simple": false,
+        "format": "raw"
+      },
+      "id": "2",
+      "name": "Get Raw Message (Gmail API)",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Gmail API returns base64url encoded raw RFC 5322 bytes in data.raw\n// Convert base64url (- and _ without padding) to standard binary buffer\n// NEVER round-trip through UTF-8 strings to preserve byte-exact hash integrity.\n\nconst rawBase64Url = $input.item.json.raw || '';\nlet base64 = rawBase64Url.replace(/-/g, '+').replace(/_/g, '/');\nwhile (base64.length % 4 !== 0) {\n  base64 += '=';\n}\n\nconst buffer = Buffer.from(base64, 'base64');\n\nreturn {\n  json: {\n    message_id: $input.item.json.id,\n    thread_id: $input.item.json.threadId,\n    size_bytes: buffer.length,\n    ingestion_source: 'gmail_n8n'\n  },\n  binary: {\n    file: {\n      data: buffer.toString('base64'),\n      mimeType: 'message/rfc822',\n      fileName: `${$input.item.json.id}.eml`\n    }\n  }\n};"
+      },
+      "id": "3",
+      "name": "Decode base64url to Raw Binary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "number": [
+            {
+              "value1": "={{ $json.size_bytes }}",
+              "operation": "smallerEqual",
+              "value2": 26214400
+            }
+          ]
+        }
+      },
+      "id": "4",
+      "name": "Size <= 25MB Check",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        900,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://backend:8000/api/v1/ingest",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-N8N-Ingest-Key",
+              "value": "={{ $env.HOPZERO_N8N_INGEST_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "ingestion_source",
+              "value": "={{ $json.ingestion_source }}"
+            },
+            {
+              "name": "provider_message_id",
+              "value": "={{ $json.message_id }}"
+            },
+            {
+              "name": "title",
+              "value": "=Gmail: {{ $json.message_id }}"
+            },
+            {
+              "name": "auto_analyze",
+              "value": "true"
+            }
+          ]
+        },
+        "sendBinaryData": true,
+        "binaryPropertyName": "file"
+      },
+      "id": "5",
+      "name": "POST to HopZero Ingest API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        1140,
+        240
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
+    },
+    {
+      "parameters": {
+        "jsCode": "// Log 413 oversized rejection\nreturn {\n  json: {\n    error: 'ARTIFACT_TOO_LARGE',\n    message: 'Artifact size exceeds 25MB ceiling. Message not forwarded to HopZero.',\n    message_id: $input.item.json.message_id,\n    size_bytes: $input.item.json.size_bytes\n  }\n};"
+      },
+      "id": "6",
+      "name": "Log Oversized Artifact Rejection",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1140,
+        420
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "\nconst response = $input.item.json;\nif (!response || !response.investigation_id) {\n    throw new Error(\"Missing investigation_id in ingest response\");\n}\nif (!response.idempotent_replay && !response.analysis_run_id) {\n    throw new Error(\"Missing analysis_run_id for new ingestion\");\n}\n\nreturn {\n  json: {\n    investigation_id: response.investigation_id,\n    analysis_run_id: response.analysis_run_id || \"\",\n    status: response.status || \"UNKNOWN\",\n    idempotent_replay: response.idempotent_replay === true,\n    demo_mode: true\n  }\n};\n"
+      },
+      "id": "validate-ingest",
+      "name": "Validate Ingest Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1360,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": "hopzero-analyst-agent",
+        "mode": "each"
+      },
+      "id": "execute-analyst-agent",
+      "name": "Handoff to Analyst Agent",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1,
+      "position": [
+        1580,
+        240
+      ]
+    }
+  ],
+  "connections": {
+    "Gmail Trigger (New Unread Email)": {
+      "main": [
+        [
+          {
+            "node": "Get Raw Message (Gmail API)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Raw Message (Gmail API)": {
+      "main": [
+        [
+          {
+            "node": "Decode base64url to Raw Binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decode base64url to Raw Binary": {
+      "main": [
+        [
+          {
+            "node": "Size <= 25MB Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Size <= 25MB Check": {
+      "main": [
+        [
+          {
+            "node": "POST to HopZero Ingest API",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log Oversized Artifact Rejection",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "POST to HopZero Ingest API": {
+      "main": [
+        [
+          {
+            "node": "Validate Ingest Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Ingest Response": {
+      "main": [
+        [
+          {
+            "node": "Handoff to Analyst Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1.0.0",
+  "meta": {
+    "instanceId": "hopzero-n8n-workflow-v1"
+  }
+}

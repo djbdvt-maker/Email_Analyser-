@@ -1,0 +1,10 @@
+{
+  "scenario": "protected_brand_lookalike",
+  "category": "lookalike",
+  "description": "Email using typosquatted brand domain micros0ft.com with explicit brand claim in display name and body",
+  "files": ["protected_brand_lookalike.eml"],
+  "expected_verdict": "spoofed_domain_typosquat",
+  "expected_severity": "High",
+  "expected_floors_triggered": ["CF-01"],
+  "expected_score_range": [60, 100]
+}

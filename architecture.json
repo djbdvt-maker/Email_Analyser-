@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "HopZero Runtime Architecture",
+    "output": "hopzero-architecture.html",
+    "quality_profile": "showcase"
+  },
+  "components": [
+    { "id": "analyst", "type": "external", "label": "SOC Analyst", "pos": [40, 60], "size": [130, 60] },
+    { "id": "frontend", "type": "frontend", "label": "React Dashboard", "sublabel": "Analyst UI", "pos": [260, 60], "size": [140, 60] },
+    { "id": "user", "type": "external", "label": "End User", "pos": [40, 200], "size": [130, 60] },
+    { "id": "extension", "type": "frontend", "label": "Gmail Extension", "sublabel": "Client Ingest", "pos": [260, 200], "size": [140, 60] },
+    { "id": "api", "type": "backend", "label": "FastAPI Backend", "sublabel": "Core API", "pos": [500, 200], "size": [140, 60] },
+    { "id": "db", "type": "database", "label": "Database", "sublabel": "PostgreSQL/SQLite", "pos": [800, 200], "size": [140, 60] },
+    { "id": "n8n", "type": "messagebus", "label": "N8N Orchestrator", "sublabel": "IMAP Poller", "pos": [260, 340], "size": [140, 60] },
+    { "id": "pipeline", "type": "backend", "label": "Analysis Pipeline", "sublabel": "Background Worker", "pos": [500, 340], "size": [140, 60] },
+    { "id": "llm", "type": "external", "label": "LLM Provider", "sublabel": "Ollama / Phi3", "pos": [800, 340], "size": [140, 60] },
+    { "id": "score", "type": "backend", "label": "Score Engine", "sublabel": "Deterministic", "pos": [500, 480], "size": [140, 60] }
+  ],
+  "boundaries": [
+    { "kind": "security-group", "label": "Trust Boundary", "wraps": ["api", "db", "pipeline", "score"] }
+  ],
+  "connections": [
+    { "id": "analyst-ui", "from": "analyst", "to": "frontend", "label": "views" },
+    { "id": "ui-api", "from": "frontend", "to": "api", "label": "REST", "fromSide": "right", "toSide": "top", "labelDy": -20 },
+    { "id": "user-ext", "from": "user", "to": "extension", "label": "clicks" },
+    { "id": "ext-api", "from": "extension", "to": "api", "label": "submits email", "variant": "emphasis" },
+    { "id": "n8n-api", "from": "n8n", "to": "api", "label": "webhook ingest", "variant": "dashed", "fromSide": "right", "toSide": "bottom", "labelDy": 20 },
+    { "id": "api-db", "from": "api", "to": "db", "label": "read/write state" },
+    { "id": "api-pipeline", "from": "api", "to": "pipeline", "label": "spawns", "variant": "emphasis", "fromSide": "bottom", "toSide": "top", "labelAt": [600, 270] },
+    { "id": "pipeline-llm", "from": "pipeline", "to": "llm", "label": "prompts", "variant": "security" },
+    { "id": "pipeline-score", "from": "pipeline", "to": "score", "label": "validates & scores", "fromSide": "bottom", "toSide": "top", "labelAt": [570, 414] },
+    { "id": "score-db", "from": "score", "to": "db", "label": "persists findings", "fromSide": "right", "toSide": "right", "via": [[640, 510], [980, 510], [980, 230]] }
+  ],
+  "cards": [
+    { "dot": "cyan", "title": "Ingestion", "items": ["Emails are ingested via the Gmail Extension (primary path) or N8N IMAP polling.", "FastAPI handles all ingest endpoints."] },
+    { "dot": "emerald", "title": "Analysis & Trust Boundary", "items": ["The Pipeline extracts deterministic facts.", "Untrusted LLM proposals are validated.", "The Score Engine calculates final severity deterministically."] },
+    { "dot": "rose", "title": "Data Storage", "items": ["All facts, findings, and scores are stored in a relational database.", "Provides the canonical view for the SOC Analyst Dashboard."] }
+  ]
+}

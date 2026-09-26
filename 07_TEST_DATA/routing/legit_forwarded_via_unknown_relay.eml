@@ -1,0 +1,31 @@
+X-Fixture-Note: This fixture demonstrates the trust boundary STOPPING
+X-Fixture-Note: mid-chain at a genuinely unrecognized RECEIVING relay.
+X-Fixture-Note: Hop 0 (newest) and Hop 1 are Google-trusted (by-clauses
+X-Fixture-Note: match the v1 Gmail patterns). Hop 2 (oldest) is where
+X-Fixture-Note: the trust walk stops: its 'by' clause is
+X-Fixture-Note: "smtp-relay.corporate-forwarder.example", which does NOT
+X-Fixture-Note: match any v1 trusted pattern. Per the Hop-0 algorithm,
+X-Fixture-Note: the candidate probable-origin IP is therefore the IP
+X-Fixture-Note: recorded by the LAST TRUSTED hop (Hop 1's own from-claim,
+X-Fixture-Note: 209.85.220.52 - Google's own record of who it received
+X-Fixture-Note: from), NOT the corporate-forwarder relay's self-reported
+X-Fixture-Note: IP (198.51.100.77), which is never trusted or surfaced
+X-Fixture-Note: as candidate origin because it originates from an
+X-Fixture-Note: untrusted receiving hop. See ANALYZER_CONTRACT.md for the
+X-Fixture-Note: full hop-by-hop breakdown.
+Received: by 2002:a05:6902:200b:b0:d0a:aaaa:bbbb with SMTP id ff11223344;
+        Fri, 12 Sep 2025 06:40:10 -0700 (PDT)
+Received: from mail-sor-f52.google.com (mail-sor-f52.google.com. [209.85.220.52])
+        by mx.google.com with SMTPS id gg998877 (version=TLS1_3);
+        Fri, 12 Sep 2025 06:40:08 -0700 (PDT)
+Received: from smtp-relay.corporate-forwarder.example (relay-03.corporate-forwarder.example [198.51.100.77])
+        by smtp-relay.corporate-forwarder.example with SMTP id hh554433;
+        Fri, 12 Sep 2025 06:40:02 -0700 (PDT)
+Message-ID: <fwd-example-0001@corporate-forwarder.example>
+Date: Fri, 12 Sep 2025 06:39:50 -0700
+From: Newsletter Team <news@partner-org.example>
+To: Alice Recipient <alice.recipient@gmail.com>
+Subject: Weekly digest
+Content-Type: text/plain; charset="UTF-8"
+
+This week's roundup is attached below.

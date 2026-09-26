@@ -1,0 +1,23 @@
+Received: from mail.lookalike-host.com (mail.lookalike-host.com [198.51.100.99])
+	by mx.google.com with ESMTPS id lk123
+	for <user@example.com>;
+	Sun, 13 Sep 2026 13:00:00 -0700
+Authentication-Results: mx.google.com;
+	spf=pass smtp.mailfrom=support@micros0ft.com;
+	dkim=fail;
+	dmarc=fail
+From: "Microsoft Customer Support" <support@micros0ft.com>
+To: <user@example.com>
+Subject: Security Verification Required for your Microsoft Account
+Date: Sun, 13 Sep 2026 13:00:00 -0700
+Message-ID: <lookalike-001@micros0ft.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+
+Dear Customer,
+
+We detected unusual activity on your Microsoft account.
+Please visit our verification portal to restore access:
+https://micros0ft.com/account/verify
+
+Microsoft Corporation Security Team

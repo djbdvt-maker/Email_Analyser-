@@ -1,0 +1,28 @@
+Received: from mail-pj1-f41.google.com (mail-pj1-f41.google.com [209.85.216.41])
+	by mx.google.com with ESMTPS id abc12345
+	for <alice@example.com>;
+	Sun, 13 Sep 2026 10:00:00 -0700
+Authentication-Results: mx.google.com;
+	dkim=pass header.i=@example.com header.s=202601;
+	spf=pass (google.com: domain of bob@example.com designates 209.85.216.41 as permitted sender) smtp.mailfrom=bob@example.com;
+	dmarc=pass (p=REJECT sp=REJECT dis=NONE) header.from=example.com
+DKIM-Signature: v=1; a=rsa-sha256; c=relaxed/relaxed;
+	d=example.com; s=202601;
+	h=to:subject:message-id:date:from:mime-version;
+	bh=47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU=;
+	b=dB34gT...==
+From: "Bob Smith" <bob@example.com>
+To: "Alice Johnson" <alice@example.com>
+Subject: Q3 Project Review Meeting Notes
+Date: Sun, 13 Sep 2026 10:00:00 -0700
+Message-ID: <clean-msg-001@example.com>
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+
+Hi Alice,
+
+Attached are the notes from our Q3 project review meeting earlier today.
+Everything is on schedule for the upcoming milestone.
+
+Best regards,
+Bob

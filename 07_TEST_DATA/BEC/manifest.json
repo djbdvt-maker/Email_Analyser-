@@ -1,0 +1,10 @@
+{
+  "scenario": "bec_ceo_wire_transfer",
+  "category": "BEC",
+  "description": "Executive impersonation with urgent financial wire request, Reply-To mismatch, and failed authentication",
+  "files": ["bec_ceo_wire_transfer.eml"],
+  "expected_verdict": "bec_ceo_impersonation",
+  "expected_severity": "High",
+  "expected_floors_triggered": ["CF-02"],
+  "expected_score_range": [60, 100]
+}

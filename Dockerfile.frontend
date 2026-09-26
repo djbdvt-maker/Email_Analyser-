@@ -1,0 +1,28 @@
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy package files
+COPY 04_FRONTEND/package.json 04_FRONTEND/package-lock.json* ./
+
+# Install dependencies
+RUN npm install
+
+# Copy source code
+COPY 04_FRONTEND/ .
+
+# Build the frontend
+RUN npm run build
+
+# Serve with nginx
+FROM nginx:alpine
+
+# Copy built assets to nginx
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Copy custom nginx config to handle React Router and Proxy to Backend
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
