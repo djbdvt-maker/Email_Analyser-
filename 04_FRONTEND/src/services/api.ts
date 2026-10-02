@@ -163,6 +163,7 @@ export async function fetchInvestigationDetail(id: string): Promise<Investigatio
           } else if (fact.fact_type === 'received_hops' && p.hops) {
             for (const h of p.hops) {
               hops.push({
+                geolocation: null,
                 hopIndex: h.sequence_index,
                 fromClaim: h.from_claim,
                 byClaim: h.by_claim,
@@ -171,6 +172,19 @@ export async function fetchInvestigationDetail(id: string): Promise<Investigatio
                 timestamp: h.timestamp,
                 trustStatus: 'neutral',
               });
+            }
+          } else if (fact.fact_type === 'ip_geolocation') {
+            if (p.detail && p.detail.includes('located in ')) {
+              const geoStr = p.detail.split('located in ')[1];
+              const val = p.value || '';
+              if (val.includes(':')) {
+                const ip = val.split(':')[0];
+                for (const h of hops) {
+                  if (h.observedIp === ip) {
+                    h.geolocation = geoStr;
+                  }
+                }
+              }
             }
           } else if (fact.fact_type === 'extracted_links' && p.links) {
             for (const l of p.links) {
@@ -191,6 +205,24 @@ export async function fetchInvestigationDetail(id: string): Promise<Investigatio
                 sha256: a.sha256,
                 flags: [],
               });
+            }
+          }
+        }
+
+        for (const fact of factsList) {
+          if (fact.fact_type === 'ip_geolocation') {
+            const p = fact.payload || {};
+            if (p.detail && p.detail.includes('located in ')) {
+              const geoStr = p.detail.split('located in ')[1];
+              const val = p.value || '';
+              if (val.includes(':')) {
+                const ip = val.split(':')[0];
+                for (const h of hops) {
+                  if (h.observedIp === ip) {
+                    h.geolocation = geoStr;
+                  }
+                }
+              }
             }
           }
         }

@@ -30,10 +30,10 @@ os.environ.setdefault('HOPZERO_LLM_PROVIDER', 'offline_deterministic_fallback')
 # test_internal_service_key.py separately verifies behavior when this
 # variable is absent.
 TEST_INTERNAL_SERVICE_KEY = "test-only-internal-service-key-do-not-use-in-production"
-os.environ.setdefault("HOPZERO_INTERNAL_SERVICE_KEY", TEST_INTERNAL_SERVICE_KEY)
+os.environ["HOPZERO_INTERNAL_SERVICE_KEY"] = TEST_INTERNAL_SERVICE_KEY
 
 TEST_N8N_INGEST_KEY = "test-only-n8n-ingest-key-do-not-use-in-production"
-os.environ.setdefault("HOPZERO_N8N_INGEST_KEY", TEST_N8N_INGEST_KEY)
+os.environ["HOPZERO_N8N_INGEST_KEY"] = TEST_N8N_INGEST_KEY
 
 from app.database import Base, get_db  # noqa: E402
 from app.main import app  # noqa: E402

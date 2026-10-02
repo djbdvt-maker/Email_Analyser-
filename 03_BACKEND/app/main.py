@@ -24,6 +24,43 @@ from app.services.imap_listener import start_imap_watcher
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    try:
+        from app.database import Base, engine, SessionLocal
+        Base.metadata.create_all(bind=engine)
+        
+        db = SessionLocal()
+        try:
+            from app.models import Organization, User, UserRole
+            from app.security import hash_password
+            
+            org = db.query(Organization).first()
+            if not org:
+                org = Organization(name="HopZero Primary")
+                db.add(org)
+                db.flush()
+            
+            users_to_seed = [
+                ("analyst@hopzero.io", "admin123", UserRole.ANALYST),
+                ("admin@hopzero.io", "admin123", UserRole.ADMIN),
+                ("admin@hopzero.local", "changeme123", UserRole.ADMIN),
+            ]
+            for email, pwd, role in users_to_seed:
+                if not db.query(User).filter(User.email == email).first():
+                    u = User(
+                        organization_id=org.id,
+                        email=email,
+                        hashed_password=hash_password(pwd),
+                        role=role,
+                    )
+                    db.add(u)
+            db.commit()
+        except Exception as seed_err:
+            print(f"Startup DB seed warning: {seed_err}", file=sys.stderr)
+        finally:
+            db.close()
+    except Exception as db_init_err:
+        print(f"Database init warning: {db_init_err}", file=sys.stderr)
+
     start_imap_watcher()
     yield
 

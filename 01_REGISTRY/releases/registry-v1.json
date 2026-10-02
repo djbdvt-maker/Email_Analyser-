@@ -874,6 +874,35 @@
       "scoring_role": "evidence_only",
       "validity_requirements": null,
       "version": "v1"
+    },
+    {
+      "ai_eligible": false,
+      "allowed_claim_signatures": [],
+      "base_weight": 0,
+      "category": "Attachment",
+      "default_strength": "Weak",
+      "description": "IP originates from high-risk geopolitical region",
+      "dimension": "THREAT_CAPABILITY",
+      "maximum_strength": "Weak",
+      "produced_by_allowed": [
+        "deterministic"
+      ],
+      "qualification_code": "HIGH_RISK_GEOLOCATION",
+      "schema_version": "1.0",
+      "scoring_role": "evidence_only",
+      "source_categories": [
+        "routing"
+      ],
+      "strength_rules": [
+        {
+          "definition": "Matches high-risk country list",
+          "points": 4,
+          "predicate_names": [],
+          "target_strength": "High"
+        }
+      ],
+      "validity_requirements": null,
+      "version": "v1"
     }
   ],
   "registry_version": "v1",

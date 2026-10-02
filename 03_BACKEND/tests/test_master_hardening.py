@@ -252,7 +252,7 @@ def test_rbac_user_role_permissions(client, user, db_session, org):
     - CANNOT close (403)
     """
     viewer = _make_user(db_session, org, "user_regular@acme.test", role=UserRole.USER)
-    inv = create_investigation(client, user)
+    inv = create_investigation(client, viewer)
     inv_id = inv["id"]
 
     # Transition to UNDER_REVIEW first

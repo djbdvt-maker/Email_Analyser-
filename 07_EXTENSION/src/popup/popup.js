@@ -70,10 +70,54 @@ document.addEventListener("DOMContentLoaded", async () => {
         currentRunId = ingestRes.analysis_run_id;
         pollRun(currentRunId);
       } catch(e) {
-        document.getElementById("run-status").innerText = "FAILED TO INGEST";
+        console.error("Ingestion failed:", e);
+        if (e.message && (e.message.includes("401") || e.message.includes("403"))) {
+          await chrome.storage.local.remove(["hz_token"]);
+          document.getElementById("login-view").classList.remove("hidden");
+          document.getElementById("main-view").classList.add("hidden");
+          document.getElementById("login-error").innerText = "Session expired. Please log in again.";
+        } else {
+          document.getElementById("run-status").innerText = `FAILED TO INGEST (${e.message})`;
+        }
       }
     } catch (e) {
-      document.getElementById("run-status").innerText = "ERROR: Could not run on this page.";
+      console.error("Extraction error:", e);
+      document.getElementById("run-status").innerText = `ERROR: ${e.message || "Could not run on this page."}`;
+    }
+  });
+
+  document.getElementById("visual-scan-btn").addEventListener("click", async () => {
+    document.getElementById("status-container").classList.remove("hidden");
+    document.getElementById("run-status").innerText = "RUNNING VISUAL SCANNER...";
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    
+    if (!tab || !tab.url || tab.url.startsWith("chrome://") || tab.url.startsWith("edge://")) {
+      document.getElementById("run-status").innerText = "ERROR: Please open a Gmail email first.";
+      return;
+    }
+
+    try {
+      await chrome.scripting.insertCSS({
+        target: { tabId: tab.id },
+        files: ["src/styles/visual_scanner.css"]
+      });
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        files: ["src/content/visual_scanner.js"]
+      });
+    } catch (e) {
+      console.warn("Could not inject visual scanner scripts:", e);
+    }
+
+    try {
+      const response = await chrome.tabs.sendMessage(tab.id, { type: "EXR_SCAN" });
+      if (response && response.ok) {
+        document.getElementById("run-status").innerText = `VISUAL SCAN DONE: ${response.results.length} findings.`;
+      } else {
+        document.getElementById("run-status").innerText = "VISUAL SCAN FAILED.";
+      }
+    } catch(e) {
+      document.getElementById("run-status").innerText = "ERROR: Could not communicate with page.";
     }
   });
 
@@ -85,6 +129,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   async function pollRun(runId, isNewRun = false) {
     if (pollingInterval) clearInterval(pollingInterval);
     let attempts = 0;
+    const MAX_ATTEMPTS = 120;
     
     // UI Progress Bar Steps
     const progContainer = document.getElementById("progress-container");
@@ -104,12 +149,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       attempts++;
       
       // Fake progress logic
-      const progPercent = Math.min(95, attempts * (100 / 30));
+      const progPercent = Math.min(95, attempts * (100 / MAX_ATTEMPTS));
       progFill.style.width = progPercent + "%";
       const stepIdx = Math.min(steps.length - 1, Math.floor((progPercent / 100) * steps.length));
       progText.innerText = steps[stepIdx];
 
-      if (attempts > 30) {
+      if (attempts > MAX_ATTEMPTS) {
         clearInterval(pollingInterval);
         document.getElementById("run-status").innerText = "Analysis timed out.";
         progContainer.classList.add("hidden");

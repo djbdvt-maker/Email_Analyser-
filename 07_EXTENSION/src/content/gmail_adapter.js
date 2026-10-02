@@ -31,7 +31,9 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           console.warn("Gmail API extraction failed, falling back to DOM", apiErr);
         }
 
+        let isRaw = true;
         if (!rawEml) {
+          isRaw = false;
           // Attempt 2: DOM Scraping Fallback
           msgId = msgId || window.location.hash.split('/').pop() || "unknown";
           
@@ -45,26 +47,52 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
           const bodyEl = document.querySelector('.a3s.aiL');
           const body = bodyEl ? bodyEl.innerText : "No Body";
           
-          // Construct synthetic .eml (Must be completely deterministic to pass backend SHA-256 integrity checks)
+          const bodyHtml = bodyEl ? bodyEl.innerHTML : "";
+          
+          // Generate a proper multi-part MIME .eml
+          const boundary = "----=_Part_" + (new Date().getTime()).toString(16) + "_" + Math.random().toString(16).substring(2);
+
+          // Helper for Base64 encoding unicode text safely in the browser
+          const base64EncodeUnicode = (str) => {
+              return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (match, p1) => String.fromCharCode('0x' + p1)));
+          };
+
+          const plainTextB64 = base64EncodeUnicode(body);
+          const htmlB64 = base64EncodeUnicode(bodyHtml);
+
           rawEml = `From: ${senderName} <${senderEmail}>
 To: Recipient <recipient@example.com>
 Subject: ${subject}
 Message-ID: <${msgId}@mail.gmail.com>
 MIME-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: multipart/alternative; boundary="${boundary}"
 
-${body}`;
+--${boundary}
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+
+${plainTextB64.match(/.{1,76}/g)?.join('\r\n') || ''}
+
+--${boundary}
+Content-Type: text/html; charset="utf-8"
+Content-Transfer-Encoding: base64
+
+${htmlB64.match(/.{1,76}/g)?.join('\r\n') || ''}
+--${boundary}--
+`;
         }
+
+        let responseData = {
+          provider: "gmail",
+          capture_mode: isRaw ? "api" : "dom_fallback",
+          provider_message_id: msgId,
+          raw_eml: rawEml,
+          raw_available: isRaw ? true : false // raw_available: false
+        };
 
         sendResponse({
           success: true,
-          data: {
-            provider: "gmail",
-            capture_mode: "dom_fallback",
-            provider_message_id: msgId,
-            raw_eml: rawEml,
-            raw_available: true
-          }
+          data: responseData
         });
       } catch (e) {
         sendResponse({ success: false, error: e.toString() });

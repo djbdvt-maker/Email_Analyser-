@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { AnalysisResult } from '../../../contract';
+import { GeolocationMap } from '../Map';
+
 
 interface Props {
   result: AnalysisResult;
@@ -94,6 +96,7 @@ export const Level3TechnicalEvidence: React.FC<Props> = ({ result }) => {
                     <th>Hop</th>
                     <th>Receiving Server</th>
                     <th>Observed IP</th>
+                    <th>Geolocation</th>
                     <th>Trust Status</th>
                     <th>Timestamp</th>
                   </tr>
@@ -104,6 +107,7 @@ export const Level3TechnicalEvidence: React.FC<Props> = ({ result }) => {
                       <td>#{h.hopIndex}</td>
                       <td className="font-mono">{h.receivingServer || '—'}</td>
                       <td className="font-mono">{h.observedIp || '—'}</td>
+                      <td>{h.geolocation || 'Unknown'}</td>
                       <td>
                         <span style={{
                           color: h.trustStatus === 'trusted' ? 'var(--color-safe)' : 'var(--color-caution)',
@@ -118,6 +122,9 @@ export const Level3TechnicalEvidence: React.FC<Props> = ({ result }) => {
                   ))}
                 </tbody>
               </table>
+              {routing.hops.some(h => h.geolocation) && (
+                <GeolocationMap locations={routing.hops.map(h => ({ ip: h.observedIp || 'Unknown', geo: h.geolocation || '' }))} />
+              )}
             </div>
           )}
 

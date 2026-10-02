@@ -102,6 +102,7 @@ export interface RoutingHop {
   observedIp: string | null;
   timestamp: string | null; // ISO 8601
   trustStatus: 'trusted' | 'untrusted' | 'unknown';
+  geolocation?: string;
 }
 
 export interface RoutingInfo {

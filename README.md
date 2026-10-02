@@ -1,105 +1,84 @@
-<div align="center">
+# HopZero - Email Threat Forensics Platform
 
-# 🚀 HopZero
+[![CI](https://github.com/djbdvt-maker/Email_Analyser-/actions/workflows/ci.yml/badge.svg)](https://github.com/djbdvt-maker/Email_Analyser-/actions/workflows/ci.yml)
 
-**Email Threat Forensics & Enterprise Threat-Detection Platform**
+> **HopZero** is a deterministic forensic engine and enterprise threat-detection platform for analyzing, scoring, and neutralizing email-based attacks (Phishing, BEC, Lookalikes).
 
-[**Documentation**](#) • [**Demo Video**](#) • [**Architecture**](#) • [**Report Issue**](#)
+## 🎥 Demo & Product Tour
 
-</div>
+*(**Jury / Reviewers:** Watch our 2-3 minute product demo below to see the forensic engine and dashboard in action)*
 
----
+[**▶️ Watch the HopZero Demo Video**](#) <!-- Replace # with actual video link -->
 
-## 📖 Introduction
-
-Welcome to **HopZero**! 
-
-HopZero is a deterministic forensic engine and enterprise threat-detection platform purpose-built for analyzing, scoring, and neutralizing email-based attacks, including Phishing, Business Email Compromise (BEC), and Lookalike domains.
-
-Modern Security Operations Center (SOC) teams require actionable and explainable intelligence. HopZero solves this by implementing a transparent, deterministic forensic engine powered by a robust **41-rule qualification registry** and a **9-bucket capped scoring model**. It strictly separates the investigation pipeline—**Evidence → Finding → Score → Verdict**—providing SOC analysts with rigorous, auditable, and explainable threat intelligence.
-
----
-
-## ✨ Key Features
-
-- **🔍 Deterministic Forensic Engine:** Transparent and auditable analysis pipeline without the black-box unpredictability.
-- **🛡️ 41-Rule Qualification Registry:** Extensive rule set mapped to real-world attack vectors and indicators of compromise.
-- **📊 Advanced Scoring Model:** 9-bucket capped scoring model ensures accurate severity assessment and minimizes false positives.
-- **🔗 SOC & SIEM Integration:** Built to integrate seamlessly into existing enterprise security workflows and automated response pipelines.
-- **🔐 Enterprise-Grade Security:** Designed from the ground up to securely handle sensitive email artifacts and evidence.
+### Platform Screenshots
+*(Replace these placeholders with actual screenshots of the UI before final submission)*
+1. **[Dashboard Overview](./docs/screenshots/dashboard.png)**
+2. **[Forensic Threat Analysis View](./docs/screenshots/analysis.png)**
+3. **[Rule Registry & Scoring](./docs/screenshots/scoring.png)**
+4. **[Browser Extension in Action](./docs/screenshots/extension.png)**
 
 ---
 
-## 💻 Tech Stack
+## 🚀 Problem Statement
+Current email security solutions often rely on black-box ML models or simplistic rulesets, making it difficult for security operations center (SOC) analysts to understand *why* an email was flagged. 
 
-HopZero is built using a modern, scalable architecture designed for enterprise workloads:
+**HopZero** solves this by implementing a transparent, deterministic forensic engine with a 41-rule qualification registry and a 9-bucket capped scoring model. It clearly separates **Evidence → Finding → Score → Verdict**, providing SOC teams with rigorous, explainable threat intelligence.
 
-- **Backend:** Python, FastAPI, SQLAlchemy
-- **Frontend:** React, TypeScript
-- **Automation:** n8n for orchestration and evidence ingestion workflows
-- **Deployment:** Docker & Docker Compose for seamless containerization
+## 🏗️ Architecture & Modules
 
----
+The platform is designed as a coherent, full-stack microservices architecture:
 
-## 🚀 Getting Started
+- **`01_REGISTRY`**: The core 41-rule qualification registry for deterministic threat modeling.
+- **`02_FORENSICS`**: The evidence and scoring engine (CF-01 to CF-06 buckets).
+- **`03_BACKEND`**: FastAPI server with Alembic migrations, RBAC, and SQLite/PostgreSQL support.
+- **`04_FRONTEND`**: React/TypeScript dashboard for SOC analysts.
+- **`06_N8N`**: Automation workflows for threat response.
+- **`07_EXTENSION`**: Browser extension for immediate end-user context.
+- **`08_FINETUNING`**: LLM component pipeline for adaptive threat analysis.
 
-Follow these steps to deploy HopZero locally for development or evaluation.
+*(See our [Architecture Visuals](./docs/architecture-visual/hopzero-architecture.html) for a complete system topology)*
+
+## 🛠️ Setup & Installation
 
 ### Prerequisites
+- Docker & Docker Compose
+- Python 3.10+
+- Node.js 18+
 
-- Docker and Docker Compose
-- Git
-- Python 3.10+ (for local backend development)
-- Node.js v18+ (for local frontend development)
+### Quick Start (Docker)
+```bash
+docker-compose up --build
+```
 
-### Installation
+### Local Development Setup
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/your-org/HopZero.git
-   cd HopZero
-   ```
+1. **Backend**
+```bash
+cd 03_BACKEND
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+```
 
-2. **Environment Configuration**
-   Copy the example environment file and configure your secrets:
-   ```bash
-   cp .env.example .env
-   # Edit .env with your specific configurations
-   ```
+2. **Frontend**
+```bash
+cd 04_FRONTEND
+npm install
+npm run dev
+```
 
-3. **Launch with Docker Compose**
-   The easiest way to start the entire HopZero stack is via Docker Compose:
-   ```bash
-   docker-compose up -d
-   ```
-   This will spin up the Backend API, Frontend Dashboard, and associated databases.
+## 🧪 Testing
 
-4. **Verify Deployment**
-   - **Backend API:** `http://localhost:8000/docs`
-   - **Frontend Dashboard:** `http://localhost:3000`
+We maintain strict test discipline with a **276-test suite** running across the registry, forensics engine, backend, and QA corpus. This guarantees the integrity of our deterministic scoring engine.
 
----
+```bash
+# Run the complete test suite
+pytest
+```
 
-## 🤝 Contributing
+*(We have a dedicated `07_TEST_DATA` corpus containing phishing, BEC, lookalike, and clean samples for robust regression validation.)*
 
-We welcome contributions from the security and open-source community! If you are interested in expanding the qualification registry, improving the scoring model, or enhancing the frontend, please refer to our contributing guidelines.
-
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/NewForensicRule`)
-3. Commit your Changes (`git commit -m 'Add new BEC detection rule'`)
-4. Push to the Branch (`git push origin feature/NewForensicRule`)
-5. Open a Pull Request
-
----
-
-## 📝 License
-
-Distributed under the MIT License. See `LICENSE` for more information.
-
----
-
-## ✉️ Contact
-
-For enterprise support, deployment assistance, or security disclosures, please reach out to our team.
-
-Project Link: [https://github.com/your-org/HopZero](https://github.com/your-org/HopZero)
+## 👥 Team
+- **Member 1** - [GitHub](https://github.com/) / [LinkedIn](https://linkedin.com/) - Role
+- **Member 2** - [GitHub](https://github.com/) / [LinkedIn](https://linkedin.com/) - Role
+- **Member 3** - [GitHub](https://github.com/) / [LinkedIn](https://linkedin.com/) - Role
+- **Member 4** - [GitHub](https://github.com/) / [LinkedIn](https://linkedin.com/) - Role

@@ -42,6 +42,7 @@ from hopzero_forensics.analyzers.links import analyze_links
 from hopzero_forensics.analyzers.attachments import analyze_attachments
 from hopzero_forensics.analyzers.infrastructure import analyze_infrastructure
 from hopzero_forensics.analyzers.geolocation import analyze_geolocation
+from hopzero_forensics.analyzers.active_threat_intel import analyze_threat_intel
 from hopzero_forensics.interfaces import SignalState
 
 from app.models import (
@@ -131,7 +132,7 @@ def execute_analysis_pipeline(
                 probable_origin_ip = str(f.value)
                 break
 
-        # The other 6 analyzers are independent, run them concurrently in threads
+        # The other analyzers are independent, run them concurrently in threads
         with concurrent.futures.ThreadPoolExecutor() as executor:
             future_auth = executor.submit(analyze_authentication, canonical_email)
             future_ident = executor.submit(analyze_identity, canonical_email, normalized_evidence=normalized_evidence)
@@ -139,6 +140,8 @@ def execute_analysis_pipeline(
             future_links = executor.submit(analyze_links, canonical_email)
             future_att = executor.submit(analyze_attachments, canonical_email)
             future_infra = executor.submit(analyze_infrastructure, canonical_email, probable_origin_ip=probable_origin_ip)
+            future_geo = executor.submit(analyze_geolocation, canonical_email, normalized_evidence=normalized_evidence)
+            future_ti = executor.submit(analyze_threat_intel, canonical_email)
             
             auth_out = future_auth.result()
             ident_out = future_ident.result()
@@ -146,6 +149,8 @@ def execute_analysis_pipeline(
             links_out = future_links.result()
             att_out = future_att.result()
             infra_out = future_infra.result()
+            geo_out = future_geo.result()
+            ti_out = future_ti.result()
 
         all_outputs = [
             routing_out,
@@ -155,6 +160,8 @@ def execute_analysis_pipeline(
             links_out,
             att_out,
             infra_out,
+            geo_out,
+            ti_out,
         ]
 
         # 5. Persist Facts

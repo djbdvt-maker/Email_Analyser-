@@ -44,8 +44,8 @@ export const App: React.FC = () => {
     
     // WebSocket for Real-Time Updates
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    // Use localhost:8000 since Vite proxies API to 8000, but ws might need direct url if not proxied
-    const ws = new WebSocket(`${protocol}//localhost:8000/api/v1/ws`);
+    const host = (import.meta as any).env?.VITE_WS_HOST || window.location.host;
+    const ws = new WebSocket(`${protocol}//${host}/api/v1/ws`);
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
@@ -82,6 +82,7 @@ export const App: React.FC = () => {
       setInvestigations(list);
     } catch (err: any) {
       if (err.message && err.message.includes('401')) {
+        localStorage.removeItem('token');
         setError("You must be logged in to view investigations. Please click 'SOC Login' in the top right.");
       } else {
         setError(`API Connection Error: ${err.message || 'Unable to fetch investigations from backend'}`);
