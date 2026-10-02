@@ -82,7 +82,7 @@ def test_ingest_valid_email_and_executes_pipeline(client):
     assert data["investigation_id"]
     assert data["artifact_id"]
     assert data["analysis_run_id"]
-    assert data["status"] == "COMPLETED"
+    assert data["status"] == "UNDER_REVIEW"
     assert data["idempotent_replay"] is False
 
     # Test idempotency: submitting same provider_message_id and same SHA-256 returns 200 duplicate

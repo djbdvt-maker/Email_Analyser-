@@ -31,6 +31,17 @@ storage/artifacts/*
 03_BACKEND/storage/artifacts/*
 !03_BACKEND/storage/artifacts/.gitkeep
 
+# Logs
+*.log
+
 # OS artifacts
 .DS_Store
 Thumbs.db
+
+# Editor / IDE
+.vscode/
+.idea/
+
+# Ignore massive test data and OS artifacts
+__MACOSX/
+test_emails/

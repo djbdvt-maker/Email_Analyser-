@@ -457,6 +457,7 @@ def get_investigation_full_detail(db: Session, *, user: User, investigation_id: 
                         raw_hops = p.get("hops", [])
                         for h in raw_hops:
                             hops_data.append({
+                                "geolocation": None,
                                 "hopIndex": h.get("sequence_index", 0),
                                 "receivingServer": h.get("by_claim"),
                                 "observedIp": h.get("observed_ip"),
@@ -488,6 +489,20 @@ def get_investigation_full_detail(db: Session, *, user: User, investigation_id: 
                             })
                     elif f.fact_type == "envelope_metadata":
                         env_metadata = p
+
+
+
+            for f in facts:
+                if f.analysis_run_id == r.id and f.fact_type == "ip_geolocation":
+                    p = f.payload or {}
+                    if p.get('detail') and 'located in ' in p.get('detail'):
+                        geo_str = p['detail'].split('located in ')[-1]
+                        val = p.get('value', '')
+                        if ':' in val:
+                            ip = val.split(':')[0]
+                            for h in hops_data:
+                                if h.get('observedIp') == ip:
+                                    h['geolocation'] = geo_str
 
             routing_info = {
                 "hops": hops_data,

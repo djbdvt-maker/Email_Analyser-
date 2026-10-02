@@ -33,10 +33,10 @@ class HopZeroClient {
     formData.append("title", `Ext Ingestion: ${emailData.provider_message_id || 'Unknown'}`);
     formData.append("auto_analyze", "true");
 
-    if (emailData.raw_available && emailData.raw_eml) {
+    if (emailData.raw_eml) {
         formData.append("file", new Blob([emailData.raw_eml], { type: "message/rfc822" }), `${emailData.provider_message_id || 'email'}.eml`);
     } else {
-        throw new Error("Raw .eml data not available. DOM scraping is not supported for forensic ingestion.");
+        throw new Error("Raw .eml data not available.");
     }
 
     const res = await fetch(`${this.baseUrl}/api/v1/ingest`, {

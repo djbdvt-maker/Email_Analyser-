@@ -84,7 +84,7 @@ def _run_e2e_pipeline_for_file(client, user, relative_path: str, provider_id: st
     ingest_data = ingest_resp.json()
     inv_id = ingest_data["investigation_id"]
     run_id = ingest_data["analysis_run_id"]
-    assert ingest_data["status"] == "COMPLETED"
+    assert ingest_data["status"] == "UNDER_REVIEW"
 
     # 2. Fetch full investigation detail (the frontend API contract)
     detail_resp = client.get(f'/api/v1/investigations/{inv_id}', headers=auth_headers(user))
