@@ -15,6 +15,7 @@ services:
       - N8N_WEBHOOK_URL=http://n8n:5678/webhook/hopzero-agent
       - DATABASE_URL=sqlite:///./storage/hopzero.db
       - HOPZERO_API_KEY=sih-extension-demo-key
+      - ABUSEIPDB_API_KEY=${ABUSEIPDB_API_KEY:-}
       - IMAP_SERVER=${IMAP_SERVER:-}
       - IMAP_USER=${IMAP_USER:-}
       - IMAP_PASSWORD=${IMAP_PASSWORD:-}
