@@ -668,8 +668,13 @@ def tool_propose_action(
     investigation_id: str,
     body: ActionDraftCreate,
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    user: User = Depends(_get_tool_user),
 ):
+    inv = db.get(Investigation, investigation_id)
+    if not inv:
+        raise HTTPException(status_code=404, detail="Investigation not found")
+    assert_same_org(user, inv.organization_id)
+
     from app.services import action_draft_service
     return action_draft_service.create_action_draft(
         db,
