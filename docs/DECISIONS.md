@@ -335,3 +335,24 @@ The following decisions are strictly locked across all work packages:
   5. **Verification**:
      - Added 4 unit tests in `03_BACKEND/tests/test_security_and_legal.py` verifying license integrity, policy completeness, softened statutory claims, and clean secret scans. All 4 passed.
      - Golden baseline matches 100% byte-for-byte (21 scoring cases + 14 EML fixtures, 0 score drift).
+
+### DEC-017: Commercial Readiness - Professional Polish, Onboarding & Documentation Portal
+- **Date**: 2026-10-12
+- **Status**: ACCEPTED & IMPLEMENTED
+- **Context**: Commercial-grade software requires clear, beautiful user onboarding, accessible keyboard and screen-reader compliant interfaces, a centralized documentation portal, and a polished README reflecting native bare-metal execution across all major platforms.
+- **Decision**:
+  1. **Comprehensive Multi-OS README**:
+     - Revamped `README.md` with OS-specific quickstart instructions (Windows `hopzero.bat`, PowerShell `hopzero.ps1`, Linux/macOS `hopzero.sh`, Python `launch.py`).
+     - Added detailed ASCII system architecture diagram covering sandbox isolation, deterministic qualification compiler, 4-gate trust boundary, and BotChain tool APIs.
+     - Documented the 5 levels of progressive disclosure, hardware edition matrix (Lite/Standard/Pro/Server), and operational limits (depth <= 2, ZIP <= 10MB, attachments <= 50).
+  2. **First-Run Onboarding Wizard**:
+     - Built `04_FRONTEND/src/components/FirstRunWizard.tsx` with accessible dialog semantics (`role="dialog"`, `aria-modal="true"`, Escape key handling).
+     - Explains the 5 levels of progressive disclosure, zero-telemetry guarantee, and local workflow.
+     - Added "Don't show again" option persisted to `localStorage`.
+     - Added "Guide" trigger button in `Navbar.tsx` allowing analysts to review onboarding anytime.
+  3. **Documentation Portal Index**:
+     - Created `docs/INDEX.md` categorizing architecture, operations, and security/legal documents.
+  4. **Verification**:
+     - Added 4 unit tests in `03_BACKEND/tests/test_professional_polish.py`. All 4 passed.
+     - Frontend production build compiled cleanly via Vite.
+     - Golden baseline matches 100% byte-for-byte (21 scoring cases + 14 EML fixtures, 0 score drift).

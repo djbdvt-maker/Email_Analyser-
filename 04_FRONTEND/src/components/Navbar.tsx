@@ -4,10 +4,11 @@ import { LoginModal } from './LoginModal';
 interface Props {
   onUploadClick: () => void;
   onHomeClick: () => void;
+  onGuideClick?: () => void;
   selectedId: string | null;
 }
 
-export const Navbar: React.FC<Props> = ({ onUploadClick, onHomeClick, selectedId }) => {
+export const Navbar: React.FC<Props> = ({ onUploadClick, onHomeClick, onGuideClick, selectedId }) => {
   const [showLogin, setShowLogin] = useState(false);
   const isLoggedInAsRole = () => {
     const token = localStorage.getItem('token');
@@ -43,6 +44,17 @@ export const Navbar: React.FC<Props> = ({ onUploadClick, onHomeClick, selectedId
       </div>
 
       <div className="nav-actions">
+        {onGuideClick && (
+          <button 
+            className="btn-secondary" 
+            onClick={onGuideClick}
+            title="Open Onboarding & Forensics Architecture Guide"
+            aria-label="Open Onboarding Guide"
+            style={{ padding: '0.4rem 0.65rem' }}
+          >
+            Guide
+          </button>
+        )}
         {selectedId && (
           <button className="btn-secondary" onClick={onHomeClick}>
             Back to List

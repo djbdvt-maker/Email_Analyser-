@@ -21,6 +21,7 @@ import {
 import { Navbar } from './components/Navbar';
 import { Dashboard } from './components/Dashboard';
 import { UploadModal } from './components/UploadModal';
+import { FirstRunWizard } from './components/FirstRunWizard';
 import { Level1ConsumerVerdict } from './components/ProgressiveDisclosure/Level1ConsumerVerdict';
 import { Level2WhyAndAction } from './components/ProgressiveDisclosure/Level2WhyAndAction';
 import { LiveAnalysisScreen } from './components/LiveAnalysisScreen';
@@ -34,6 +35,9 @@ export const App: React.FC = () => {
   const [detail, setDetail] = useState<InvestigationDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [showUpload, setShowUpload] = useState(false);
+  const [showWizard, setShowWizard] = useState<boolean>(() => {
+    return localStorage.getItem('hopzero_first_run_completed') !== 'true';
+  });
   const [comparison, setComparison] = useState<RunComparison | null>(null);
   const [loadingComparison, setLoadingComparison] = useState(false);
 
@@ -214,6 +218,7 @@ const userRole = React.useMemo(() => {
         selectedId={selectedId}
         onUploadClick={() => setShowUpload(true)}
         onHomeClick={() => setSelectedId(null)}
+        onGuideClick={() => setShowWizard(true)}
       />
 
       <main className="main-content">
@@ -385,6 +390,12 @@ const userRole = React.useMemo(() => {
           }}
         />
       )}
+
+      <FirstRunWizard
+        isOpen={showWizard}
+        onClose={() => setShowWizard(false)}
+        onOpenUpload={() => setShowUpload(true)}
+      />
     </div>
   );
 };
