@@ -47,7 +47,19 @@ def verify_target(target_dir: Path) -> bool:
     return True
 
 
+import tempfile
+import zipfile
+
+
 if __name__ == "__main__":
     target = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else REPO_ROOT
-    success = verify_target(target)
+    if target.is_file() and target.suffix.lower() == ".zip":
+        print(f"[*] Extracting archive {target.name} to temporary sandbox for verification...")
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            tmp_path = Path(tmp_dir)
+            with zipfile.ZipFile(target, "r") as zf:
+                zf.extractall(tmp_path)
+            success = verify_target(tmp_path)
+    else:
+        success = verify_target(target)
     sys.exit(0 if success else 1)
