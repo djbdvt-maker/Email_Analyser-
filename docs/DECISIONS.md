@@ -356,3 +356,22 @@ The following decisions are strictly locked across all work packages:
      - Added 4 unit tests in `03_BACKEND/tests/test_professional_polish.py`. All 4 passed.
      - Frontend production build compiled cleanly via Vite.
      - Golden baseline matches 100% byte-for-byte (21 scoring cases + 14 EML fixtures, 0 score drift).
+
+### DEC-018: Commercial Readiness - Business Model, Offline Licensing & Tiered Editions
+- **Date**: 2026-10-12
+- **Status**: ACCEPTED & IMPLEMENTED
+- **Context**: Finalizing the 10-section commercial readiness plan requires a clear business model, offline cryptographic license verification without external network calls, formal edition feature split (Lite, Standard, Pro, Server), and an active license inspection API.
+- **Decision**:
+  1. **Offline Cryptographic License Architecture**:
+     - Implemented `hopzero.core.licensing` with token structure: `HZ-<EDITION>-<PAYLOAD_BASE64>-<HMAC_SHA256_SIG>`.
+     - Completely air-gapped verification: checks cryptographic signature, edition matching, and expiration date with zero network calls.
+     - Graceful evaluation fallback: when unlicensed or key is absent, defaults to Community/Evaluation tier with core forensic engine, 41-rule compiler, and progressive disclosure UI fully unlocked.
+  2. **Edition & Licensing Documentation**:
+     - Published `docs/EDITIONS.md` documenting technical capacities and feature splits across Lite (&lt;8 GB RAM), Standard (8–16 GB), Pro (&gt;=16 GB + GPU), and Server (Enterprise PostgreSQL + worker clusters).
+     - Published `docs/COMMERCIAL_LICENSING.md` outlining the dual-license model (Apache 2.0 vs Commercial Enterprise), air-gapped key management, support SLAs (24h standard, 4h enterprise), and softened statutory BSA disclaimers.
+  3. **System API Endpoint**:
+     - Added `GET /api/v1/system/license` in `03_BACKEND/app/api/v1/routes_system.py`.
+  4. **Verification**:
+     - Added 5 unit tests in `03_BACKEND/tests/test_licensing.py`. All 5 passed.
+     - Full test suite passes at 479 passed, 1 skipped, 0 failures.
+     - Golden baseline matches 100% byte-for-byte (21 scoring cases + 14 EML fixtures, 0 score drift).

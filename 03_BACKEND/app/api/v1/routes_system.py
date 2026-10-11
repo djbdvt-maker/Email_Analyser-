@@ -60,3 +60,12 @@ def export_system_diagnostics():
         media_type="application/zip"
     )
 
+
+@router.get("/license", summary="Get active commercial or community license status")
+def get_system_license():
+    """Returns active license entitlement and verification details (100% offline)."""
+    from hopzero.core.licensing import get_active_license
+    active = get_active_license()
+    return active.to_dict()
+
+
