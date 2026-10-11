@@ -12,6 +12,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     document.getElementById("login-view").classList.add("hidden");
     document.getElementById("main-view").classList.remove("hidden");
     document.getElementById("auth-status").innerText = "Logged In";
+    const logoutBtn = document.getElementById("logout-btn");
+    if (logoutBtn) logoutBtn.classList.remove("hidden");
   }
 
   document.getElementById("login-btn").addEventListener("click", async () => {
@@ -25,10 +27,25 @@ document.addEventListener("DOMContentLoaded", async () => {
       document.getElementById("login-view").classList.add("hidden");
       document.getElementById("main-view").classList.remove("hidden");
       document.getElementById("auth-status").innerText = "Logged In";
+      const logoutBtn = document.getElementById("logout-btn");
+      if (logoutBtn) logoutBtn.classList.remove("hidden");
     } catch (e) {
       document.getElementById("login-error").innerText = e.message;
     }
   });
+
+  const logoutBtn = document.getElementById("logout-btn");
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", async () => {
+      await chrome.storage.local.remove(["hz_token"]);
+      client.token = null;
+      document.getElementById("login-view").classList.remove("hidden");
+      document.getElementById("main-view").classList.add("hidden");
+      document.getElementById("auth-status").innerText = "Logged Out";
+      logoutBtn.classList.add("hidden");
+      document.getElementById("run-status").innerText = "IDLE";
+    });
+  }
 
   document.getElementById("analyze-btn").addEventListener("click", async () => {
     document.getElementById("status-container").classList.remove("hidden");
@@ -70,7 +87,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         currentRunId = ingestRes.analysis_run_id;
         pollRun(currentRunId);
       } catch(e) {
-        document.getElementById("run-status").innerText = "FAILED TO INGEST";
+        document.getElementById("run-status").innerText = `FAILED TO INGEST: ${e.message}`;
       }
     } catch (e) {
       document.getElementById("run-status").innerText = "ERROR: Could not run on this page.";
@@ -88,27 +105,19 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     try {
-      await chrome.scripting.insertCSS({
-        target: { tabId: tab.id },
-        files: ["src/styles/visual_scanner.css"]
-      });
-      await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        files: ["src/content/visual_scanner.js"]
-      });
-    } catch (e) {
-      console.warn("Could not inject visual scanner scripts:", e);
-    }
-
-    try {
       const response = await chrome.tabs.sendMessage(tab.id, { type: "EXR_SCAN" });
       if (response && response.ok) {
-        document.getElementById("run-status").innerText = `VISUAL SCAN DONE: ${response.results.length} findings.`;
+        const count = response.results ? response.results.length : 0;
+        if (count === 0) {
+          document.getElementById("run-status").innerText = "VISUAL SCAN DONE: No threats detected. Make sure you have an email open.";
+        } else {
+          document.getElementById("run-status").innerText = `VISUAL SCAN DONE: ${count} findings.`;
+        }
       } else {
-        document.getElementById("run-status").innerText = "VISUAL SCAN FAILED.";
+        document.getElementById("run-status").innerText = "VISUAL SCAN FAILED: " + (response && response.error ? response.error : "Unknown error");
       }
     } catch(e) {
-      document.getElementById("run-status").innerText = "ERROR: Could not communicate with page.";
+      document.getElementById("run-status").innerText = `ERROR: ${e.message}`;
     }
   });
 
@@ -244,8 +253,8 @@ document.addEventListener("DOMContentLoaded", async () => {
       document.getElementById("compare-container").classList.remove("hidden");
       
       safeSetText("comp-score-delta", comp.score_delta);
-      safeSetText("comp-severity-change", comp.severity_change ? "Changed" : "Unchanged");
-      safeSetText("comp-verdict-change", comp.verdict_change ? "Changed" : "Unchanged");
+      safeSetText("comp-severity-change", comp.severity_changed ? "Changed" : "Unchanged");
+      safeSetText("comp-verdict-change", comp.verdict_changed ? "Changed" : "Unchanged");
       
       loadEnforcement();
     } catch(e) {

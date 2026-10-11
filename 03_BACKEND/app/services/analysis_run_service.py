@@ -1,3 +1,4 @@
+from typing import Any, Dict, Optional, Union
 from datetime import datetime, timezone
 
 from fastapi import HTTPException, status
@@ -6,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.audit import record_audit_event
 from app.models import AnalysisRun, AnalysisRunStatus, AuditAction, User
 from app.services.investigation_service import get_investigation
+from hopzero.core.models import AnalysisRunConfig
 
 _ALLOWED_TRANSITIONS: dict[AnalysisRunStatus, set[AnalysisRunStatus]] = {
     AnalysisRunStatus.QUEUED: {AnalysisRunStatus.PARSING, AnalysisRunStatus.CANCELLED},
@@ -20,9 +22,28 @@ _ALLOWED_TRANSITIONS: dict[AnalysisRunStatus, set[AnalysisRunStatus]] = {
 _TERMINAL_USABLE = {AnalysisRunStatus.COMPLETED}
 
 
-def create_analysis_run(db: Session, *, user: User, investigation_id: str, artifact_id: str) -> AnalysisRun:
+def create_analysis_run(
+    db: Session,
+    *,
+    user: User,
+    investigation_id: str,
+    artifact_id: str,
+    config: Optional[Union[AnalysisRunConfig, Dict[str, Any]]] = None,
+) -> AnalysisRun:
     inv = get_investigation(db, user=user, investigation_id=investigation_id)
-    run = AnalysisRun(investigation_id=inv.id, artifact_id=artifact_id, status=AnalysisRunStatus.QUEUED)
+    if isinstance(config, AnalysisRunConfig):
+        config_dict = config.to_dict()
+    elif isinstance(config, dict):
+        config_dict = config
+    else:
+        config_dict = AnalysisRunConfig().to_dict()
+
+    run = AnalysisRun(
+        investigation_id=inv.id,
+        artifact_id=artifact_id,
+        status=AnalysisRunStatus.QUEUED,
+        config=config_dict,
+    )
     db.add(run)
     db.flush()
     record_audit_event(

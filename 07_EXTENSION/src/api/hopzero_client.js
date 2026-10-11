@@ -26,7 +26,8 @@ class HopZeroClient {
 
   async ingestEmail(emailData) {
     const formData = new FormData();
-    formData.append("ingestion_source", "gmail_extension_api");
+    const source = emailData.capture_mode === "dom_fallback" ? "gmail_extension_api_dom_fallback" : "gmail_extension_api";
+    formData.append("ingestion_source", source);
     if (emailData.provider_message_id) {
         formData.append("provider_message_id", emailData.provider_message_id);
     }

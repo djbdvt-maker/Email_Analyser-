@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  XAxis, YAxis, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, LineChart, Line, CartesianGrid
 } from 'recharts';
 import { InvestigationSummary } from '../../contract';
@@ -29,16 +29,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ investigations, onSelect }
     { name: 'Unknown', value: investigations.filter(i => i.severity === undefined).length, color: '#6b7280' }, // gray-500
   ].filter(d => d.value > 0);
 
-  // Status breakdown
-  const statusCounts = investigations.reduce((acc, inv) => {
-    acc[inv.status] = (acc[inv.status] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-  
-  const statusData = Object.keys(statusCounts).map(k => ({
-    name: k,
-    count: statusCounts[k]
-  }));
+
 
   // Activity over time (mocked based on actual timestamps)
   const sorted = [...investigations].sort((a, b) => {

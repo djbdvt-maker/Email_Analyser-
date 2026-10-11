@@ -1,0 +1,29 @@
+"""HopZero shared LLM adapter package."""
+
+from .client import (
+    LLMClient,
+    LLMConfig,
+    LLMResponse,
+    ERR_AI_UNAVAILABLE_TIMEOUT,
+    ERR_AI_UNAVAILABLE_CONNECTION_REFUSED,
+    ERR_AI_UNAVAILABLE_MODEL_NOT_LOADED,
+    ERR_AI_UNAVAILABLE_RESOURCE_EXHAUSTED,
+    ERR_AI_INVALID_JSON,
+    ERR_AI_INVALID_SCHEMA,
+    ERR_AI_REFUSAL,
+)
+from .ollama_adapter import OllamaLLMClient
+
+__all__ = [
+    "LLMClient",
+    "LLMConfig",
+    "LLMResponse",
+    "OllamaLLMClient",
+    "ERR_AI_UNAVAILABLE_TIMEOUT",
+    "ERR_AI_UNAVAILABLE_CONNECTION_REFUSED",
+    "ERR_AI_UNAVAILABLE_MODEL_NOT_LOADED",
+    "ERR_AI_UNAVAILABLE_RESOURCE_EXHAUSTED",
+    "ERR_AI_INVALID_JSON",
+    "ERR_AI_INVALID_SCHEMA",
+    "ERR_AI_REFUSAL",
+]

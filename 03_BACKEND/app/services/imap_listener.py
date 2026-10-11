@@ -43,8 +43,10 @@ def watch_inbox():
                             headers["X-N8N-Ingest-Key"] = settings.hopzero_n8n_ingest_key
                         resp = requests.post(INGEST_URL, files=files, headers=headers)
                         
-                        if resp.status_code == 200:
+                        if resp.status_code in (200, 201):
                             logger.info(f"Successfully ingested email from IMAP: {resp.json()}")
+                        else:
+                            logger.warning(f"IMAP ingest failed ({resp.status_code}): {resp.text}")
             
             mail.close()
             mail.logout()

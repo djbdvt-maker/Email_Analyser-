@@ -1,0 +1,44 @@
+{
+  "snapshot_timestamp_utc": "2026-10-11T15:45:00Z",
+  "python": {
+    "version": "3.12.10",
+    "architecture": "64bit",
+    "compiler": "MSC v.1942 64 bit (AMD64)"
+  },
+  "node": {
+    "version": "v24.20.0",
+    "npm_version": "11.19.0"
+  },
+  "database": {
+    "engine_default_desktop": "sqlite3 (bundled with Python 3.12.10)",
+    "postgres_supported_range": ">=15.0, <=17.x",
+    "postgres_recommended_docker_tag": "postgres:16-alpine",
+    "driver": "psycopg2-binary >= 2.9.9"
+  },
+  "ollama": {
+    "version": "0.33.3",
+    "api_endpoint": "http://127.0.0.1:11434"
+  },
+  "llm_model": {
+    "name": "hermes3:3b",
+    "digest": "a8851c5041d400c8eece484771e0a9f438e6500de9f22150ef2863bf7209fbd9",
+    "format": "gguf",
+    "family": "llama",
+    "parameter_size": "3.2B",
+    "quantization_level": "Q4_K_M",
+    "context_length": 131072,
+    "size_bytes": 2019384442
+  },
+  "docker": {
+    "version": "29.8.1",
+    "build": "4a63305"
+  },
+  "regression_corpus": {
+    "scoring_cases_count": 21,
+    "email_fixtures_count": 14,
+    "baseline_file": "05_QA/golden/golden_outputs.json",
+    "check_script": "scripts/check_golden.py",
+    "save_script": "scripts/save_golden.py",
+    "status": "100% byte-for-byte exact match verified"
+  }
+}

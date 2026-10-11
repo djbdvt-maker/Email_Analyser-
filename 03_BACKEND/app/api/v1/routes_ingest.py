@@ -85,7 +85,7 @@ def _authenticate_ingest_caller(
                 user = db.get(User, user_id)
                 if user and user.is_active:
                     return user, False
-        except Exception:
+        except Exception as e:
             pass
 
     raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
@@ -151,6 +151,14 @@ async def ingest_email(
     # 2. Check Idempotency on (ingestion_source, provider_message_id)
     if provider_message_id:
         existing = evidence_service.get_artifact_by_source_and_provider_id(db, ingestion_source=ingestion_source, provider_message_id=provider_message_id)
+        # Also check with just provider_message_id to prevent duplicates when
+        # the same email is re-submitted with a different ingestion_source
+        # (e.g. first via api, then via dom_fallback)
+        if not existing:
+            from app.models import Artifact
+            existing = db.query(Artifact).filter(
+                Artifact.provider_message_id == provider_message_id
+            ).first()
         if existing:
             incoming_sha256 = hashlib.sha256(content).hexdigest()
             if incoming_sha256 != existing.original_artifact_sha256:
@@ -159,11 +167,19 @@ async def ingest_email(
                 # Otherwise pass, allow DOM reconstructed emails to differ in hash
             response.status_code = status.HTTP_200_OK
             inv = db.get(Investigation, existing.investigation_id)
+            
+            run_id = inv.current_analysis_run_id if inv else None
+            if not run_id and inv:
+                from app.models import AnalysisRun
+                latest_run = db.query(AnalysisRun).filter(AnalysisRun.investigation_id == inv.id).order_by(AnalysisRun.created_at.desc()).first()
+                if latest_run:
+                    run_id = latest_run.id
+
             return IngestResponse(
                 investigation_id=existing.investigation_id,
                 artifact_id=existing.id,
-                analysis_run_id=inv.current_analysis_run_id if inv else None,
-                status="AWAITING_ANALYSIS",
+                analysis_run_id=run_id,
+                status=inv.status.value if inv else "AWAITING_ANALYSIS",
                 idempotent_replay=True,
             )
 
@@ -203,15 +219,15 @@ async def ingest_email(
             if "PYTHONPATH" not in env:
                 env["PYTHONPATH"] = backend_dir
             log_path = os.path.join(backend_dir, "subprocess_pipeline.log")
-            # Open file in append mode; Popen will inherit the handle
-            f = open(log_path, "a")
-            subprocess.Popen(
-                [sys.executable, "-m", "app.run_pipeline_script", str(user.id), str(inv.id), str(artifact.id), str(run.id)],
-                cwd=backend_dir,
-                env=env,
-                stdout=f,
-                stderr=f
-            )
+            # Open file in append mode; close after Popen inherits the handle
+            with open(log_path, "a") as f:
+                subprocess.Popen(
+                    [sys.executable, "-m", "app.run_pipeline_script", str(user.id), str(inv.id), str(artifact.id), str(run.id)],
+                    cwd=backend_dir,
+                    env=env,
+                    stdout=f,
+                    stderr=f
+                )
             final_status = "AWAITING_ANALYSIS"
 
     return IngestResponse(

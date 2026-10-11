@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+set -e
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$DIR/.." && pwd)"
+export PYTHONPATH="$REPO_ROOT/01_REGISTRY:$REPO_ROOT/02_FORENSICS:$REPO_ROOT/03_BACKEND:$DIR"
+python3 "$DIR/check_golden.py" "$@" || python "$DIR/check_golden.py" "$@"

@@ -32,7 +32,8 @@ _forensics_dir = str(_repo_root / "02_FORENSICS")
 if _forensics_dir not in sys.path:
     sys.path.insert(0, _forensics_dir)
 
-from hopzero_forensics.parser import parse_eml
+from hopzero_forensics.parser import parse_eml, parse_eml_isolated
+from app.config import get_settings
 from hopzero_forensics.evidence_normalizer import normalize_email
 from hopzero_forensics.analyzers.routing import analyze_routing
 from hopzero_forensics.analyzers.authentication import analyze_authentication
@@ -87,6 +88,29 @@ def execute_analysis_pipeline(
     if not run or run.investigation_id != inv.id:
         raise ValueError(f"AnalysisRun {run_id} not found for investigation {investigation_id}")
 
+    # Ensure run.config records HZ8 reproducibility fields
+    try:
+        from app.services.ai_reasoner_service import resolve_llm_reproducibility
+        from hopzero.core.models import AnalysisRunConfig
+        repro = resolve_llm_reproducibility(get_settings())
+        if not run.config or not run.config.get("llm"):
+            existing_cfg = dict(run.config or {})
+            cfg = AnalysisRunConfig(
+                llm_model=repro["model"],
+                llm_digest=repro["digest"],
+                llm_quantization=repro["quantization"],
+                llm_num_ctx=repro["num_ctx"],
+                llm_options_hash=repro["options_hash"],
+                llm_prompt_version=repro["prompt_version"],
+                llm_schema_version=repro["schema_version"],
+                extra_options=existing_cfg.get("extra_options", {}),
+            )
+            run.config = cfg.to_dict()
+            db.add(run)
+            db.flush()
+    except Exception as exc:
+        logger.warning("Could not populate run.config reproducibility fields: %s", exc)
+
     try:
         # 1. Transition to PARSING
         transition_run_status(
@@ -108,8 +132,14 @@ def execute_analysis_pipeline(
                 f"Artifact hash mismatch: expected {artifact.original_artifact_sha256}, got {calculated_sha256}"
             )
 
-        # 2. Parse CanonicalEmail
-        canonical_email = parse_eml(raw_bytes, artifact_id=artifact.id)
+        # 2. Parse CanonicalEmail via Isolated Worker
+        settings = get_settings()
+        canonical_email = parse_eml_isolated(
+            raw_bytes,
+            artifact_id=artifact.id,
+            timeout=getattr(settings, "parser_timeout_seconds", 15.0),
+            isolation_mode=getattr(settings, "parser_isolation_mode", "subprocess"),
+        )
 
         # 3. Transition to ANALYZING
         transition_run_status(
@@ -375,7 +405,6 @@ def execute_analysis_pipeline(
         # 6a. Laya Pre-Screen — fast (~35ms) typed decision pre-screening
         #     Advisory signals only: persisted as Facts, never as Findings.
         #     When benign + high confidence → optionally skip the expensive LLM call.
-        from app.config import get_settings
         settings = get_settings()
         laya_prescreen_result = None
 

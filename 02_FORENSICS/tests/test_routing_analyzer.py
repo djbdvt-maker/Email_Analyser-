@@ -175,3 +175,50 @@ def test_analyzer_output_never_assigns_severity_or_score():
         assert not hasattr(c, "score")
         assert not hasattr(c, "severity")
         assert c.strength in {"weak", "moderate", "strong"}
+
+
+# ---------------------------------------------------------------------------
+# Real-World Captures (HZ1 Shipped Validation)
+# ---------------------------------------------------------------------------
+
+def test_real_capture_gmail_no_cf06_and_hop0_present():
+    """Real Gmail delivery chain with ARC, DKIM, and internal delivery token."""
+    email, output = _analyze("real_capture_gmail.eml")
+    assert _codes(output) == set()
+    hop0 = _fact(output, "hop0_candidate_ip")
+    assert hop0.state == SignalState.PRESENT
+    assert hop0.value == "209.85.214.175"
+
+
+def test_real_capture_m365_no_cf06_and_hop0_present():
+    """Real Microsoft 365 Exchange Online Protection tenant delivery."""
+    email, output = _analyze("real_capture_m365.eml")
+    assert _codes(output) == set()
+    hop0 = _fact(output, "hop0_candidate_ip")
+    assert hop0.state == SignalState.PRESENT
+    assert hop0.value == "40.107.23.51"
+
+
+def test_real_capture_unrecognized_relay_stops_at_boundary():
+    """Real corporate relay delivering to Gmail MX; boundary stops at unrecognized relay without CF-06."""
+    email, output = _analyze("real_capture_unrecognized_relay.eml")
+    assert "CF-06:TEMPORAL_CONTRADICTION_BEYOND_TOLERANCE" not in _codes(output)
+    assert "CF-06:STRUCTURAL_IMPLAUSIBILITY" not in _codes(output)
+    assert "CF-06:INDEPENDENT_TRUSTED_CONTRADICTION" not in _codes(output)
+    hop0 = _fact(output, "hop0_candidate_ip")
+    assert hop0.state == SignalState.PRESENT
+    assert hop0.value == "198.51.100.35"
+    assert hop0.value != "10.10.4.12"
+
+
+def test_real_capture_manual_forward_stops_at_boundary():
+    """Real manual/mailing-list forward delivering to Gmail MX; boundary stops without CF-06."""
+    email, output = _analyze("real_capture_manual_forward.eml")
+    assert "CF-06:TEMPORAL_CONTRADICTION_BEYOND_TOLERANCE" not in _codes(output)
+    assert "CF-06:STRUCTURAL_IMPLAUSIBILITY" not in _codes(output)
+    assert "CF-06:INDEPENDENT_TRUSTED_CONTRADICTION" not in _codes(output)
+    hop0 = _fact(output, "hop0_candidate_ip")
+    assert hop0.state == SignalState.PRESENT
+    assert hop0.value == "198.51.100.99"
+    assert hop0.value != "203.0.113.88"
+

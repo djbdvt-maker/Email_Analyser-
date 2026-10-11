@@ -1,0 +1,25 @@
+# Auto-detect text files and enforce consistent LF line endings
+* text=auto eol=lf
+
+# Raw forensic emails must remain strictly binary to prevent CRLF line-ending drift
+# and guarantee byte-for-byte SHA-256 hash stability across Windows/Linux/macOS
+*.eml binary
+*.msg binary
+
+# Media, databases, and compiled binaries
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.db binary
+*.sqlite binary
+*.sqlite3 binary
+*.zip binary
+*.tar binary
+*.gz binary
+*.gguf binary
+*.woff binary
+*.woff2 binary
+*.ttf binary

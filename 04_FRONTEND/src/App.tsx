@@ -55,7 +55,7 @@ export const App: React.FC = () => {
             loadDetail(data.investigation_id);
           }
         }
-      } catch (e) {}
+      } catch (e) { console.error('WebSocket message parsing error:', e); }
     };
     return () => { ws.close(); };
   }, [selectedId]);
@@ -120,8 +120,8 @@ export const App: React.FC = () => {
     try {
       const comp = await compareRuns(invId, run1Id, run2Id);
       setComparison(comp);
-    } catch {
-      // ignore comparison failure for demo fixtures
+    } catch (e) {
+      console.warn('Comparison failure ignored for demo fixtures:', e);
     } finally {
       setLoadingComparison(false);
     }

@@ -1,6 +1,7 @@
 // Email X-Ray - Content Script
 // Detects hidden phishing tactics in Gmail and Yahoo Mail
 
+(function() {
 const EXR = {
   findings: [],
   scanInProgress: false,
@@ -97,7 +98,7 @@ const EXR = {
     if (!emailService) {
       console.warn('[Email X-Ray] Not on Gmail or Yahoo Mail');
       this.scanInProgress = false;
-      return;
+      return [];
     }
     
     console.log(`[Email X-Ray] Scanning ${emailService}...`);
@@ -106,9 +107,9 @@ const EXR = {
     if (emailService === 'gmail') {
       const readingView = document.querySelector('.aeH .adn');
       if (!readingView) {
-        console.warn('[Email X-Ray] Gmail message view not detected.');
+        console.warn('[Email X-Ray] Gmail message view not detected. Please open an email first.');
         this.scanInProgress = false;
-        return;
+        return [];
       }
     }
     
@@ -118,7 +119,7 @@ const EXR = {
     if (!emailBody) {
       console.warn('[Email X-Ray] Email body not found');
       this.scanInProgress = false;
-      return;
+      return [];
     }
     
     // Run all detection methods
@@ -1169,3 +1170,4 @@ if (document.readyState === 'loading') {
 } else {
   EXR.init();
 }
+})();

@@ -1,3 +1,4 @@
+# pyrefly: ignore [missing-import]
 from fastapi import APIRouter, Depends, UploadFile, File
 from sqlalchemy.orm import Session
 
@@ -58,10 +59,7 @@ def export_evidence(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    """
-    The only endpoint that produces an EVIDENCE_EXPORTED audit event
-    and computes export_bundle_sha256.
-    """
+
     artifact = evidence_service.export_artifact(
         db, user=user, investigation_id=investigation_id, artifact_id=artifact_id
     )

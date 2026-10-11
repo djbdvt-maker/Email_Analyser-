@@ -94,6 +94,7 @@ class AnalysisRunOut(BaseModel):
     failure_reason: Optional[str]
     started_at: Optional[datetime]
     completed_at: Optional[datetime]
+    config: Optional[dict] = None
     created_at: datetime
     updated_at: datetime
 
@@ -375,6 +376,39 @@ class EnforcementActionOut(BaseModel):
     rejection_reason: Optional[str] = None
     failure_reason: Optional[str] = None
     execution_details: dict = Field(default_factory=dict)
+    created_at: datetime
+    updated_at: datetime
+
+
+class ActionDraftCreate(BaseModel):
+    action_type: str = Field(..., description="Action type: BLOCK_SENDER, BLOCK_DOMAIN, BLOCK_IP, QUARANTINE, ADD_NOTE, etc.")
+    proposed_payload: dict = Field(default_factory=dict, description="Action parameters, e.g. target, note, reason")
+    created_by_actor: Optional[str] = Field("botchain", description="Identifier of proposing bot or agent")
+
+
+class ActionDraftConfirm(BaseModel):
+    execution_notes: Optional[str] = Field(None, description="Optional notes accompanying confirmation")
+
+
+class ActionDraftReject(BaseModel):
+    reason: str = Field(..., min_length=1, max_length=1024, description="Reason for rejecting the action draft")
+
+
+class ActionDraftOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    organization_id: str
+    investigation_id: str
+    action_type: str
+    proposed_payload: dict = Field(default_factory=dict)
+    status: str
+    created_by_bot: bool
+    created_by_actor: str
+    created_by_user_id: Optional[str] = None
+    confirmed_by_user_id: Optional[str] = None
+    confirmed_at: Optional[datetime] = None
+    rejection_reason: Optional[str] = None
+    execution_result: Optional[dict] = None
     created_at: datetime
     updated_at: datetime
 

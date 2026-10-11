@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     # AI Reasoner / LLM Provider Configuration
     hopzero_llm_provider: str = "offline_deterministic_fallback"  # "ollama" | "openai" | "offline_deterministic_fallback"
     hopzero_llm_base_url: str | None = "http://localhost:11434"  # e.g. "http://localhost:11434" or "http://localhost:8000/v1"
-    hopzero_llm_model: str = "phi3"
+    hopzero_llm_model: str = "hermes3:3b"
     hopzero_llm_api_key: str | None = None
     hopzero_llm_timeout_seconds: float = 30.0
 
@@ -43,10 +43,78 @@ class Settings(BaseSettings):
     laya_prescreen_skip_ai_on_benign: bool = True  # Skip expensive LLM call when Laya classifies as benign with high confidence
     laya_prescreen_benign_confidence_threshold: float = 0.75  # Minimum confidence to trust a benign classification for AI skip
 
+    # Parser Isolation Configuration
+    parser_isolation_mode: str = "subprocess"  # "subprocess" | "process_pool" | "in_process"
+    parser_timeout_seconds: float = 15.0
+
     cors_origins: str = "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000"
     environment: str = "development"
+
+
+from pathlib import Path
+
+
+class ConfigurationError(RuntimeError):
+    """Raised when an environment or startup configuration invariant fails."""
+    def __init__(self, message: str, hint: str = ""):
+        self.message = message
+        self.hint = hint
+        formatted = f"\n[CONFIGURATION ERROR] {message}"
+        if hint:
+            formatted += f"\n  --> HINT: {hint}"
+        super().__init__(formatted)
+
+
+def validate_settings(settings: Settings) -> None:
+    """
+    Validates application settings at startup with readable, actionable errors.
+    Fails closed before sockets or database pools open.
+    """
+    # 1. Database URL scheme validation
+    valid_db_prefixes = ("sqlite:///", "sqlite:", "postgresql://", "postgresql+psycopg2://")
+    if not any(settings.database_url.startswith(prefix) for prefix in valid_db_prefixes):
+        raise ConfigurationError(
+            f"Invalid DATABASE_URL scheme '{settings.database_url.split('://')[0] if '://' in settings.database_url else settings.database_url}'.",
+            "Set DATABASE_URL to a valid SQLite ('sqlite:///./storage/hopzero.db') or PostgreSQL URI ('postgresql+psycopg2://user:pass@localhost:5432/hopzero')."
+        )
+
+    # 2. Production JWT secret validation
+    if settings.environment.lower() == "production":
+        insecure_keys = ("change-me-in-production", "secret", "password", "default", "")
+        if not settings.jwt_secret_key or settings.jwt_secret_key.strip().lower() in insecure_keys:
+            raise ConfigurationError(
+                "Insecure default or empty JWT_SECRET_KEY in production mode.",
+                "Generate a cryptographically secure key with: python -c \"import secrets; print(secrets.token_urlsafe(32))\""
+            )
+
+    # 3. Parser isolation mode validation
+    valid_isolation_modes = {"subprocess", "process_pool", "in_process"}
+    if settings.parser_isolation_mode not in valid_isolation_modes:
+        raise ConfigurationError(
+            f"Invalid PARSER_ISOLATION_MODE '{settings.parser_isolation_mode}'.",
+            f"Valid options are: {', '.join(sorted(valid_isolation_modes))}."
+        )
+
+    # 4. LLM provider validation
+    valid_llm_providers = {"ollama", "openai", "offline_deterministic_fallback"}
+    if settings.hopzero_llm_provider not in valid_llm_providers:
+        raise ConfigurationError(
+            f"Invalid HOPZERO_LLM_PROVIDER '{settings.hopzero_llm_provider}'.",
+            f"Valid options are: {', '.join(sorted(valid_llm_providers))}."
+        )
+
+    # 5. Artifact storage root validation
+    try:
+        p = Path(settings.artifact_storage_root)
+        p.mkdir(parents=True, exist_ok=True)
+    except Exception as e:
+        raise ConfigurationError(
+            f"Cannot create or access ARTIFACT_STORAGE_ROOT at '{settings.artifact_storage_root}': {e}",
+            "Ensure the directory path is writable or set ARTIFACT_STORAGE_ROOT in your .env."
+        )
 
 
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+

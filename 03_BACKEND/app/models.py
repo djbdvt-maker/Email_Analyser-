@@ -90,6 +90,10 @@ class AuditAction(str, enum.Enum):
     ENFORCEMENT_FAILED = "ENFORCEMENT_FAILED"
     ENFORCEMENT_REJECTED = "ENFORCEMENT_REJECTED"
     LAYA_PRESCREEN_COMPLETED = "LAYA_PRESCREEN_COMPLETED"
+    ACTION_DRAFT_CREATED = "ACTION_DRAFT_CREATED"
+    ACTION_DRAFT_CONFIRMED = "ACTION_DRAFT_CONFIRMED"
+    ACTION_DRAFT_REJECTED = "ACTION_DRAFT_REJECTED"
+    ACTION_DRAFT_CANCELLED = "ACTION_DRAFT_CANCELLED"
 
 
 class AICandidateStatus(str, enum.Enum):
@@ -168,6 +172,7 @@ class Investigation(Base):
     findings = relationship("Finding", back_populates="investigation")
     user_feedbacks = relationship("UserFeedback", back_populates="investigation")
     enforcement_actions = relationship("EnforcementAction", back_populates="investigation")
+    action_drafts = relationship("ActionDraft", back_populates="investigation")
 
 
 
@@ -182,6 +187,7 @@ class AnalysisRun(Base):
 
     started_at = Column(DateTime(timezone=True), nullable=True)
     completed_at = Column(DateTime(timezone=True), nullable=True)
+    config = Column(JSON, nullable=True, default=dict)
     created_at = Column(DateTime(timezone=True), default=_now, nullable=False)
     updated_at = Column(DateTime(timezone=True), default=_now, onupdate=_now, nullable=False)
 
@@ -498,4 +504,43 @@ class EnforcementAction(Base):
     requested_by = relationship("User", foreign_keys=[requested_by_user_id])
     authorized_by = relationship("User", foreign_keys=[authorized_by_user_id])
     executed_by = relationship("User", foreign_keys=[executed_by_user_id])
+
+
+class ActionDraftStatus(str, enum.Enum):
+    PENDING_CONFIRMATION = "PENDING_CONFIRMATION"
+    CONFIRMED = "CONFIRMED"
+    REJECTED = "REJECTED"
+    CANCELLED = "CANCELLED"
+
+
+class ActionDraft(Base):
+    """
+    Bot or user-initiated proposed action draft requiring human confirmation
+    before irreversible execution (Invariant 7: Never an automatic irreversible action).
+    """
+    __tablename__ = "action_drafts"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    organization_id = Column(String(36), ForeignKey("organizations.id"), nullable=False)
+    investigation_id = Column(String(36), ForeignKey("investigations.id"), nullable=False)
+    action_type = Column(String(64), nullable=False)
+    proposed_payload = Column(JSON, nullable=False, default=dict)
+    status = Column(SAEnum(ActionDraftStatus), nullable=False, default=ActionDraftStatus.PENDING_CONFIRMATION)
+
+    created_by_bot = Column(Boolean, nullable=False, default=True)
+    created_by_actor = Column(String(128), nullable=False, default="botchain")
+    created_by_user_id = Column(String(36), ForeignKey("users.id"), nullable=True)
+
+    confirmed_by_user_id = Column(String(36), ForeignKey("users.id"), nullable=True)
+    confirmed_at = Column(DateTime(timezone=True), nullable=True)
+    rejection_reason = Column(Text, nullable=True)
+    execution_result = Column(JSON, nullable=True)
+
+    created_at = Column(DateTime(timezone=True), default=_now, nullable=False)
+    updated_at = Column(DateTime(timezone=True), default=_now, onupdate=_now, nullable=False)
+
+    organization = relationship("Organization")
+    investigation = relationship("Investigation", back_populates="action_drafts")
+    created_by_user = relationship("User", foreign_keys=[created_by_user_id])
+    confirmed_by_user = relationship("User", foreign_keys=[confirmed_by_user_id])
 

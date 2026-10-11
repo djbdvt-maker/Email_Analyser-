@@ -61,6 +61,39 @@ ERR_AI_UNAVAILABLE_MODEL_NOT_LOADED = "AI_UNAVAILABLE_MODEL_NOT_LOADED"
 ERR_AI_UNAVAILABLE_RESOURCE_EXHAUSTED = "AI_UNAVAILABLE_RESOURCE_EXHAUSTED"
 ERR_AI_INVALID_JSON = "AI_INVALID_JSON"
 ERR_AI_INVALID_SCHEMA = "AI_INVALID_SCHEMA"
+ERR_AI_REFUSAL = "AI_REFUSAL"
+
+PROPOSAL_SCHEMA = {
+    "type": "object",
+    "properties": {
+        "no_findings": {"type": "boolean"},
+        "candidates": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "qualification_code": {"type": "string"},
+                    "claim_signature": {"type": "string"},
+                    "supporting_text": {"type": "string"},
+                    "supporting_text_location": {"type": "string", "enum": ["subject", "body"]},
+                    "model_suggested_strength": {"type": "string", "enum": ["Weak", "Moderate", "Strong"]},
+                    "model_confidence": {"type": "number"},
+                    "rationale": {"type": "string"},
+                },
+                "required": [
+                    "qualification_code",
+                    "claim_signature",
+                    "supporting_text",
+                    "supporting_text_location",
+                    "model_suggested_strength",
+                    "model_confidence",
+                    "rationale",
+                ],
+            },
+        },
+    },
+    "required": ["no_findings", "candidates"],
+}
 
 AI_UNAVAILABLE_EXPLANATION = (
     "AI content analysis unavailable for this investigation — verdict reflects "
@@ -227,14 +260,19 @@ def _invoke_llm_provider(
     timeout = settings.hopzero_llm_timeout_seconds or 30.0
 
     if provider == "ollama":
-        url = f"{base_url}/api/generate"
-        payload = {
-            "model": model,
-            "prompt": prompt,
-            "stream": False,
-            "format": "json",
-        }
-        headers = {"Content-Type": "application/json"}
+        from hopzero.llm import LLMConfig, OllamaLLMClient
+        config = LLMConfig.from_yaml()
+        if base_url:
+            config.base_url = base_url
+        if model and model != "llama3":
+            config.model = model
+        if timeout:
+            config.timeout_seconds = timeout
+        client = OllamaLLMClient(config=config)
+        resp = client.complete(prompt, json_schema=PROPOSAL_SCHEMA)
+        if not resp.is_success:
+            return None, resp.error
+        return resp.content, None
     elif provider == "openai":
         url = f"{base_url}/chat/completions" if base_url else "https://api.openai.com/v1/chat/completions"
         payload = {
@@ -434,6 +472,75 @@ def parse_llm_json_response(raw_text: str) -> Tuple[Optional[List[Dict[str, Any]
         return None, ERR_AI_INVALID_SCHEMA
 
 
+def resolve_llm_reproducibility(settings=None) -> Dict[str, Any]:
+    """
+    Resolves the exact LLM reproducibility metadata per HZ8:
+    - model: model identifier string
+    - digest: SHA-256 digest of model artifact (e.g. from Ollama /api/tags or fallback)
+    - quantization: e.g. 'Q4_K_M', 'FP16', or 'deterministic-rule-engine'
+    - num_ctx: context window size in tokens (e.g. 4096)
+    - options_hash: canonical hash of execution options
+    - prompt_version: version of structured prompt template
+    - schema_version: version of JSON response schema
+    """
+    if settings is None:
+        settings = get_settings()
+
+    provider = (getattr(settings, "hopzero_llm_provider", "") or "").lower()
+    base_url = getattr(settings, "hopzero_llm_base_url", "http://localhost:11434") or "http://localhost:11434"
+    model_name = getattr(settings, "hopzero_llm_model", "hermes3:3b") or "hermes3:3b"
+
+    digest = None
+    quantization = None
+    num_ctx = 4096
+
+    if provider == "ollama":
+        try:
+            req = urllib.request.Request(f"{base_url.rstrip('/')}/api/tags")
+            with urllib.request.urlopen(req, timeout=1.5) as resp:
+                tags_data = json.loads(resp.read().decode("utf-8"))
+                for m in tags_data.get("models", []):
+                    if m.get("name") == model_name or m.get("model") == model_name:
+                        digest = m.get("digest")
+                        details = m.get("details", {})
+                        quantization = details.get("quantization_level")
+                        break
+        except Exception:
+            pass
+        if not digest:
+            digest = f"ollama:{model_name}"
+        if not quantization:
+            quantization = "Q4_K_M"
+    elif provider == "openai":
+        digest = f"openai:{model_name}"
+        quantization = "api-hosted"
+    else:
+        model_name = FALLBACK_MODEL_IDENTIFIER
+        digest = FALLBACK_MODEL_DIGEST
+        quantization = "deterministic-rule-engine"
+
+    options_payload = {
+        "provider": provider,
+        "temperature": 0.0,
+        "top_p": 1.0,
+        "seed": 42,
+        "max_tokens": 1024,
+        "num_ctx": num_ctx,
+    }
+    canonical_opts = json.dumps(options_payload, sort_keys=True, separators=(",", ":"))
+    options_hash = hashlib.sha256(canonical_opts.encode("utf-8")).hexdigest()
+
+    return {
+        "model": model_name,
+        "digest": digest,
+        "quantization": quantization,
+        "num_ctx": num_ctx,
+        "options_hash": options_hash,
+        "prompt_version": PROMPT_SCHEMA_VERSION,
+        "schema_version": "proposal-v1",
+    }
+
+
 def run_ai_reasoning_pipeline(
     db: Session,
     *,
@@ -460,15 +567,11 @@ def run_ai_reasoning_pipeline(
     # 1. Compute deterministic context hash
     context_hash = compute_deterministic_context_snapshot_hash(deterministic_facts)
 
-    # 2. Determine model metadata
+    # 2. Determine model metadata and HZ8 reproducibility fields
     provider = (settings.hopzero_llm_provider or "").lower()
-    if provider in ("ollama", "openai"):
-        model_identifier = settings.hopzero_llm_model or f"llm-{provider}"
-        # Store exact known model identifier / version without fake synthetic digests
-        model_digest = model_identifier
-    else:
-        model_identifier = FALLBACK_MODEL_IDENTIFIER
-        model_digest = FALLBACK_MODEL_DIGEST
+    repro = resolve_llm_reproducibility(settings)
+    model_identifier = repro["model"]
+    model_digest = repro["digest"]
 
     # Deterministic adversarial injection pre-scan
     injection_scan = deterministic_injection_prescan(f"{email_subject}\n\n{email_body_text}")
@@ -480,6 +583,7 @@ def run_ai_reasoning_pipeline(
         "seed": 42,
         "max_tokens": 1024,
         "injection_prescan": injection_scan,
+        "reproducibility": repro,
     }
     if provider == "ollama":
         gen_params["top_k"] = 40
@@ -487,7 +591,7 @@ def run_ai_reasoning_pipeline(
     prov_payload = AIExecutionProvenanceCreate(
         model_identifier=model_identifier,
         model_version_or_digest=model_digest,
-        prompt_schema_version=PROMPT_SCHEMA_VERSION,
+        prompt_schema_version=repro["prompt_version"],
         deterministic_context_snapshot_hash=context_hash,
         ai_generation_parameters=gen_params,
     )

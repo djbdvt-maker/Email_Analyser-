@@ -1,0 +1,27 @@
+Delivered-To: sam.analyst@gmail.com
+Received: by 2002:a05:6808:11cb:b0:3c9:4521:26a3 with SMTP id y11csp1234567oia;
+        Wed, 15 Jan 2026 09:30:15 -0800 (PST)
+X-Received: by 2002:a17:902:d547:b0:1f2:8a9b:5c31 with SMTP id b1234567890def;
+        Wed, 15 Jan 2026 09:30:14 -0800 (PST)
+Return-Path: <notifications@internal-enterprise.net>
+Received: from mta-out.internal-enterprise.net (mta-out.internal-enterprise.net. [198.51.100.35])
+        by mx.google.com with ESMTPS id g789012345abc.45.2026.01.15.09.30.12
+        for <sam.analyst@gmail.com>
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 15 Jan 2026 09:30:12 -0800 (PST)
+Received-SPF: pass (google.com: domain of notifications@internal-enterprise.net designates 198.51.100.35 as permitted sender) client-ip=198.51.100.35;
+Authentication-Results: mx.google.com;
+       spf=pass (google.com: domain of notifications@internal-enterprise.net designates 198.51.100.35 as permitted sender) smtp.mailfrom=notifications@internal-enterprise.net
+Received: from app-srv01.internal-enterprise.net (app-srv01.internal-enterprise.net [10.10.4.12])
+        by mta-out.internal-enterprise.net (Postfix) with ESMTP id 4X987K2L01
+        for <sam.analyst@gmail.com>; Wed, 15 Jan 2026 09:30:08 -0800 (PST)
+Message-ID: <notification-20260115093008@internal-enterprise.net>
+Date: Wed, 15 Jan 2026 09:30:05 -0800
+From: System Notifications <notifications@internal-enterprise.net>
+To: Sam Analyst <sam.analyst@gmail.com>
+Subject: Daily Cluster Health Telemetry
+Content-Type: text/plain; charset="UTF-8"
+MIME-Version: 1.0
+
+Automated health checks passed with zero error conditions.
+Storage headroom is currently at 84% capacity across all production volumes.

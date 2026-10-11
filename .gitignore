@@ -26,10 +26,17 @@ venv/
 *.db
 *.sqlite3
 *.sqlite
+*.db-wal
+*.db-shm
+*.bak
+backups/
+**/backups/
+hardware_profile.json
 storage/artifacts/*
 !storage/artifacts/.gitkeep
 03_BACKEND/storage/artifacts/*
 !03_BACKEND/storage/artifacts/.gitkeep
+
 
 # Logs
 *.log
@@ -45,3 +52,6 @@ Thumbs.db
 # Ignore massive test data and OS artifacts
 __MACOSX/
 test_emails/
+*.patch
+code-detox/
+Awesome-Vibecoding-Guide/

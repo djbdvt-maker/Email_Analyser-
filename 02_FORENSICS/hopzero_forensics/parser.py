@@ -25,6 +25,7 @@ from __future__ import annotations
 
 import hashlib
 import ipaddress
+import os
 import re
 import uuid
 from datetime import datetime, timezone
@@ -385,10 +386,58 @@ def _extract_body_and_links(msg: EmailMessage) -> EmailBody:
     )
 
 
-def _extract_attachments(msg: EmailMessage) -> list[ExtractedAttachment]:
+MAX_MIME_RECURSION_DEPTH = 20
+MAX_MIME_PARTS = 250
+MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024         # 10 MB per part
+MAX_TOTAL_ATTACHMENT_BYTES = 25 * 1024 * 1024   # 25 MB cumulative
+MAX_ATTACHMENTS_COUNT = 50
+
+
+def _walk_bounded(
+    msg: EmailMessage,
+    max_depth: int = MAX_MIME_RECURSION_DEPTH,
+    max_parts: int = MAX_MIME_PARTS,
+    parse_warnings: list[str] | None = None,
+):
+    """
+    Safely traverses MIME structure with hard bounds on recursion depth
+    and total parts to mitigate MIME recursion bombs.
+    """
+    stack = [(msg, 0)]
+    visited = 0
+    depth_exceeded = False
+    parts_exceeded = False
+    while stack:
+        current, depth = stack.pop()
+        visited += 1
+        if visited > max_parts:
+            parts_exceeded = True
+            break
+        yield current
+        if current.is_multipart():
+            if depth >= max_depth:
+                depth_exceeded = True
+                continue
+            payload = current.get_payload()
+            if isinstance(payload, list):
+                for subpart in reversed(payload):
+                    stack.append((subpart, depth + 1))
+    if depth_exceeded and parse_warnings is not None:
+        parse_warnings.append(f"MIME_DEPTH_EXCEEDED: multipart recursion capped at depth {max_depth}")
+    if parts_exceeded and parse_warnings is not None:
+        parse_warnings.append(f"MIME_PARTS_EXCEEDED: multipart traversal capped at {max_parts} parts")
+
+
+def _extract_attachments(msg: EmailMessage, parse_warnings: list[str] | None = None) -> list[ExtractedAttachment]:
     attachments: list[ExtractedAttachment] = []
     idx = 0
-    for part in msg.walk():
+    total_bytes = 0
+
+    for part in _walk_bounded(msg, parse_warnings=parse_warnings):
+        if idx >= MAX_ATTACHMENTS_COUNT:
+            if parse_warnings is not None:
+                parse_warnings.append(f"ATTACHMENT_COUNT_EXCEEDED: attachment count capped at {MAX_ATTACHMENTS_COUNT}")
+            break
         if part.is_multipart():
             continue
         content_disposition = part.get_content_disposition()
@@ -404,15 +453,35 @@ def _extract_attachments(msg: EmailMessage) -> list[ExtractedAttachment]:
         state = SignalState.PRESENT
         sha256 = None
         size_bytes = None
-        try:
-            payload = part.get_payload(decode=True)
-            if payload is not None:
-                size_bytes = len(payload)
-                sha256 = hashlib.sha256(payload).hexdigest()
-            else:
-                state = SignalState.UNAVAILABLE
-        except Exception:
+        payload = None
+
+        if total_bytes >= MAX_TOTAL_ATTACHMENT_BYTES:
+            if parse_warnings is not None:
+                parse_warnings.append(f"ATTACHMENT_TOTAL_SIZE_EXCEEDED: cumulative size capped at {MAX_TOTAL_ATTACHMENT_BYTES} bytes")
             state = SignalState.UNAVAILABLE
+        else:
+            try:
+                payload = part.get_payload(decode=True)
+                if payload is not None:
+                    size_bytes = len(payload)
+                    if size_bytes > MAX_ATTACHMENT_BYTES:
+                        if parse_warnings is not None:
+                            parse_warnings.append(f"ATTACHMENT_PART_SIZE_EXCEEDED: part size {size_bytes} exceeds {MAX_ATTACHMENT_BYTES} bytes")
+                        state = SignalState.UNAVAILABLE
+                        payload = None
+                    elif total_bytes + size_bytes > MAX_TOTAL_ATTACHMENT_BYTES:
+                        if parse_warnings is not None:
+                            parse_warnings.append(f"ATTACHMENT_TOTAL_SIZE_EXCEEDED: cumulative size capped at {MAX_TOTAL_ATTACHMENT_BYTES} bytes")
+                        state = SignalState.UNAVAILABLE
+                        total_bytes += size_bytes
+                        payload = None
+                    else:
+                        total_bytes += size_bytes
+                        sha256 = hashlib.sha256(payload).hexdigest()
+                else:
+                    state = SignalState.UNAVAILABLE
+            except Exception:
+                state = SignalState.UNAVAILABLE
 
         attachments.append(
             ExtractedAttachment(
@@ -441,6 +510,8 @@ def _extract_attachments(msg: EmailMessage) -> list[ExtractedAttachment]:
                 with zipfile.ZipFile(io.BytesIO(payload)) as zf:
                     total_uncompressed = 0
                     for zinfo in zf.infolist():
+                        if idx >= MAX_ATTACHMENTS_COUNT:
+                            break
                         total_uncompressed += zinfo.file_size
                         if total_uncompressed > 10 * 1024 * 1024:
                             break
@@ -537,7 +608,7 @@ def parse_eml(raw_bytes: bytes, *, artifact_id: str, parse_instance_id: str | No
         body = EmailBody(text_plain=None, html_sanitized=None, html_available=False, links=[])
 
     try:
-        attachments = _extract_attachments(msg)
+        attachments = _extract_attachments(msg, parse_warnings=parse_warnings)
     except Exception as exc:
         parse_warnings.append(f"attachment_extraction_failed: {exc}")
         attachments = []
@@ -569,3 +640,22 @@ def parse_eml_file(path: str, *, artifact_id: str | None = None, parse_instance_
     with open(path, "rb") as f:
         raw = f.read()
     return parse_eml(raw, artifact_id=artifact_id or path, parse_instance_id=parse_instance_id)
+
+
+def parse_eml_isolated(
+    raw_bytes: bytes,
+    *,
+    artifact_id: str,
+    parse_instance_id: str | None = None,
+    timeout: float = 15.0,
+    isolation_mode: str = "subprocess",
+) -> CanonicalEmail:
+    """Convenience forwarder to hopzero.core.isolation.parse_eml_isolated."""
+    from hopzero.core.isolation import parse_eml_isolated as _core_parse_isolated
+    return _core_parse_isolated(
+        raw_bytes,
+        artifact_id=artifact_id,
+        parse_instance_id=parse_instance_id,
+        timeout=timeout,
+        isolation_mode=isolation_mode,
+    )

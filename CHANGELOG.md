@@ -2,7 +2,27 @@
 
 This changelog records the changes made in the consolidated hardening and integration pass on the existing HopZero project (`C:\Users\HELLO\Desktop\sih`).
 
-## Summary of Changes
+## [4.2.0] - 2026-10-12 (Commercial Release & Universal Deployment)
+### Added
+- **Multi-OS CI Matrix**: GitHub Actions workflow testing on Windows, Ubuntu, and macOS with Python 3.12 and Node.js 20.
+- **Clean-Install Smoke Test**: Automated end-to-end installation and `/health` verification runner (`scripts/smoke_test.py`).
+- **Air-Gapped Offline Network Isolation Test**: Rigorous network jail verifying zero remote network calls during forensics (`scripts/test_network_isolation.py`).
+- **Nightly Drift Detection**: Automated scheduled pipeline running golden regression baseline against latest dependencies (`.github/workflows/nightly-drift.yml`).
+- **Automated Dependabot**: Weekly dependency update tracking (`.github/dependabot.yml`).
+- **Cryptographic Release Publisher**: Automatic GitHub release workflow generating signed archives with SHA-256 checksums (`.github/workflows/release.yml`).
+- **One-Click Native Launcher**: Zero-Docker launch sequence (`scripts/launch.py`, `hopzero.bat`, `hopzero.ps1`, `hopzero.sh`) with auto port allocation and model warm-up.
+- **Hardware Auto-Detection & Edition Recommender**: Hardware profiling (`hopzero/core/hardware.py`) recommending Lite, Standard, Pro, or Server edition.
+- **Transactional Installer**: Installer with consent confirmation, prerequisite audit, and atomic rollback on failure (`scripts/install.py`).
+
+### Security & Invariants
+- Zero LLM scoring authority locked across all forensic engines.
+- Golden regression baseline verified byte-for-byte across all 21 scoring cases and 14 raw RFC 5322 EML fixtures.
+- Subprocess parser isolation wall enforcing bounded resource limits.
+- ActionDrafts governance preventing automatic execution of irreversible threat actions.
+- Single resident local model (`hermes3:3b`, Q4_K_M) shared across HopZero and BotChain tool extensions.
+
+## Summary of Previous Changes
+
 
 ### 1. Canonical InvestigationStatus Lifecycle (`03_BACKEND`, `04_FRONTEND`)
 - **Strict Canonical Statuses**: Canonical `InvestigationStatus` values are strictly:

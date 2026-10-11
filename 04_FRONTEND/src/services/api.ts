@@ -283,8 +283,8 @@ export async function fetchInvestigationDetail(id: string): Promise<Investigatio
           evidenceFacts: factsList,
         };
       }
-    } catch {
-      // Ignore score fetch error if run incomplete
+    } catch (e) {
+      console.warn('Score fetch error (ignored if run incomplete):', e);
     }
   }
 
@@ -399,8 +399,8 @@ export async function uploadEmlFile(file: File): Promise<UploadResult> {
       if (errJson.detail) {
         errorDetail = errJson.detail;
       }
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error('Error parsing error detail:', e);
     }
     throw new Error(errorDetail);
   }
@@ -442,8 +442,8 @@ export async function performAnalystAction(
       if (errJson.detail) {
         errorDetail = errJson.detail;
       }
-    } catch {
-      // ignore
+    } catch (e) {
+      console.error('Error parsing error detail:', e);
     }
     throw new Error(errorDetail);
   }
@@ -492,7 +492,7 @@ export async function submitUserFeedback(
     try {
       const j = await res.json();
       if (j.message) msg = j.message;
-    } catch {}
+    } catch (e) { console.error('Error parsing response message:', e); }
     throw new Error(msg);
   }
 
@@ -556,7 +556,7 @@ export async function requestEnforcementAction(
     try {
       const j = await res.json();
       if (j.message) msg = j.message;
-    } catch {}
+    } catch (e) { console.error('Error parsing response message:', e); }
     throw new Error(msg);
   }
 
@@ -581,7 +581,7 @@ export async function authorizeEnforcementAction(
     try {
       const j = await res.json();
       if (j.message) msg = j.message;
-    } catch {}
+    } catch (e) { console.error('Error parsing response message:', e); }
     throw new Error(msg);
   }
 
@@ -608,7 +608,7 @@ export async function executeEnforcementAction(
     try {
       const j = await res.json();
       if (j.message) msg = j.message;
-    } catch {}
+    } catch (e) { console.error('Error parsing response message:', e); }
     throw new Error(msg);
   }
 
@@ -635,7 +635,7 @@ export async function rejectEnforcementAction(
     try {
       const j = await res.json();
       if (j.message) msg = j.message;
-    } catch {}
+    } catch (e) { console.error('Error parsing response message:', e); }
     throw new Error(msg);
   }
 

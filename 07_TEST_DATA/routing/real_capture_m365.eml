@@ -1,0 +1,36 @@
+Received: from PA4PR04MB9911.eurprd04.prod.outlook.com (2603:10a6:20b:2e6::14)
+ by AM6PR04MB5432.eurprd04.prod.outlook.com with HTTPS;
+ Wed, 15 Jan 2026 14:10:22 +0000
+Received: from AS8PR04MB7788.eurprd04.prod.outlook.com (2603:10a6:208:123::45)
+ by PA4PR04MB9911.eurprd04.prod.outlook.com with Microsoft SMTP Server
+ (version=TLS1_2, cipher=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384) id 15.20.8000.15;
+ Wed, 15 Jan 2026 14:10:20 +0000
+Received: from AM6EUR05FT012.eop-eur05.prod.protection.outlook.com
+ (2603:10a6:208:123::45) by AS8PR04MB7788.eurprd04.prod.outlook.com with
+ Microsoft SMTP Server (version=TLS1_2) id 15.20.8000.12;
+ Wed, 15 Jan 2026 14:10:18 +0000
+Authentication-Results: spf=pass (sender IP is 40.107.23.51)
+ smtp.mailfrom=enterprise.example.com; dkim=pass (signature was verified)
+ header.d=enterprise.example.com; dmarc=pass action=none header.from=enterprise.example.com;
+Received-SPF: Pass (protection.outlook.com: domain of enterprise.example.com
+ designates 40.107.23.51 as permitted sender)
+ receiver=protection.outlook.com; client-ip=40.107.23.51;
+Received: from EUR05-AM6-obe.outbound.protection.outlook.com (40.107.23.51)
+ by AM6EUR05FT012.mail.protection.outlook.com (10.233.241.12) with Microsoft SMTP Server
+ (version=TLS1_3, cipher=TLS_AES_256_GCM_SHA384) id 15.20.8000.10 via Frontend Transport;
+ Wed, 15 Jan 2026 14:10:15 +0000
+Message-ID: <PA4PR04MB9911EXAMPLE12345@eurprd04.prod.outlook.com>
+Date: Wed, 15 Jan 2026 14:10:10 +0000
+From: Morgan Director <morgan.director@enterprise.example.com>
+To: Taylor Lead <taylor.lead@enterprise.example.com>
+Subject: Quarterly Performance Metrics Report
+Content-Type: text/plain; charset="UTF-8"
+MIME-Version: 1.0
+
+Hello Taylor,
+
+The final performance indicators for Q4 have been consolidated.
+Let us schedule a thirty-minute sync before Friday's executive committee meeting.
+
+Warm regards,
+Morgan

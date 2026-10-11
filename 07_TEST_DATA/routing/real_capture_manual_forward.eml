@@ -1,0 +1,32 @@
+Delivered-To: casey.alumni.personal@gmail.com
+Received: by 2002:a05:6808:11cb:b0:3c9:4521:26a3 with SMTP id y11csp1234567oia;
+        Wed, 15 Jan 2026 11:45:25 -0800 (PST)
+X-Received: by 2002:a17:902:d547:b0:1f2:8a9b:5c31 with SMTP id c1234567890def;
+        Wed, 15 Jan 2026 11:45:24 -0800 (PST)
+Return-Path: <newsletter@vendor-services.com>
+Received: from relay.alumni-forwarder.org (relay.alumni-forwarder.org. [198.51.100.99])
+        by mx.google.com with ESMTPS id j890123456abc.78.2026.01.15.11.45.22
+        for <casey.alumni.personal@gmail.com>
+        (version=TLS1_3 cipher=TLS_AES_256_GCM_SHA384 bits=256/256);
+        Wed, 15 Jan 2026 11:45:22 -0800 (PST)
+Received: from mail-out.vendor-services.com (mail-out.vendor-services.com. [203.0.113.88])
+        by relay.alumni-forwarder.org (Postfix) with ESMTP id 3Y567Z8901
+        for <casey.forward@alumni-forwarder.org>; Wed, 15 Jan 2026 11:45:15 -0800 (PST)
+Received: from internal-mailer.vendor-services.com (internal-mailer.local [10.20.30.40])
+        by mail-out.vendor-services.com (8.14.7/8.14.7) with ESMTP id k0F9J12345
+        for <casey.forward@alumni-forwarder.org>; Wed, 15 Jan 2026 11:45:10 -0800 (PST)
+Message-ID: <newsletter-20260115114510@vendor-services.com>
+Date: Wed, 15 Jan 2026 11:45:00 -0800
+From: Vendor Services <newsletter@vendor-services.com>
+To: Casey Member <casey.forward@alumni-forwarder.org>
+Subject: Community Event Schedule & Winter Webinar
+Content-Type: text/plain; charset="UTF-8"
+MIME-Version: 1.0
+
+Hello Casey,
+
+Registration for our upcoming annual winter webinar series is now live.
+Sessions will cover technical architecture and industry compliance best practices.
+
+Warm regards,
+Event Coordination Team

@@ -8,8 +8,13 @@
 <body>
   <div id="app">
     <header>
-      <h2>HopZero</h2>
-      <span id="auth-status">Logged Out</span>
+      <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <h2>HopZero</h2>
+        <div>
+          <span id="auth-status" style="margin-right: 10px;">Logged Out</span>
+          <button id="logout-btn" class="hidden" style="padding: 2px 5px; font-size: 10px;">Logout</button>
+        </div>
+      </div>
     </header>
 
     <div id="login-view" class="view">

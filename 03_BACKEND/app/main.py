@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 
 from app.api.v1 import websockets
+from fastapi.routing import APIRoute
 from app.api.v1 import (
     routes_auth,
     routes_investigations,
@@ -15,22 +16,43 @@ from app.api.v1 import (
     routes_feedback,
     routes_enforcement,
     routes_sandbox,
+    routes_tool,
+    routes_action_drafts,
+    routes_system,
 )
+from hopzero.tools.domain import domain_tool_router
 from fastapi.middleware.cors import CORSMiddleware
 
-import traceback, sys; from starlette.requests import Request; from starlette.responses import JSONResponse;
+import traceback, sys
 from contextlib import asynccontextmanager
+from app.config import get_settings, validate_settings
+from app.database import init_db_with_backup
 from app.services.imap_listener import start_imap_watcher
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    validate_settings(get_settings())
+    init_db_with_backup()
     start_imap_watcher()
     yield
+
+
+
+def custom_generate_unique_id(route: APIRoute) -> str:
+    """Generates clean, stable OpenAPI operationId values for bot orchestration."""
+    if route.operation_id:
+        return route.operation_id
+    clean_name = route.name
+    if not clean_name.startswith("hopzero_"):
+        clean_name = f"hopzero_{clean_name}"
+    return clean_name
+
 
 app = FastAPI(
     title="HopZero Backend",
     version="2.0.0",
     lifespan=lifespan,
+    generate_unique_id_function=custom_generate_unique_id,
     description=(
         "Investigation/AnalysisRun lifecycle, evidence ingestion, "
         "Fact/Finding persistence, the AI-candidate trust boundary, "
@@ -47,10 +69,15 @@ from app.config import get_settings
 _settings = get_settings()
 _cors_origins = [o.strip() for o in _settings.cors_origins.split(",") if o.strip()]
 
+# Chrome extensions have dynamic origins (chrome-extension://<id>)
+# In development mode, allow all origins for easier testing
+if _settings.environment == "development":
+    _cors_origins = ["*"]
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,
-    allow_credentials=True,
+    allow_credentials=True if _settings.environment != "development" else False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -66,6 +93,10 @@ app.include_router(routes_ai.router)
 app.include_router(routes_ingest.router)
 app.include_router(routes_feedback.router)
 app.include_router(routes_enforcement.router)
+app.include_router(routes_tool.router)
+app.include_router(routes_action_drafts.router)
+app.include_router(routes_system.router, prefix="/api/v1")
+app.include_router(domain_tool_router)
 app.include_router(websockets.router, prefix="/api/v1")
 
 
@@ -86,7 +117,7 @@ async def integrity_error_handler(request: Request, exc: IntegrityError):
     )
 
 
-@app.get("/health", tags=["health"])
+@app.get("/health", tags=["health"], operation_id="hopzero_health")
 def health():
     return {"status": "ok"}
 @app.exception_handler(Exception)

@@ -299,21 +299,38 @@ def analyze_routing(email: CanonicalEmail) -> AnalyzerOutput:
         )
     else:
         boundary_hop = next(h for h in hops if h.sequence_index == boundary_index)
-        if boundary_hop.observed_ip:
+        effective_hop = boundary_hop
+        if not effective_hop.observed_ip:
+            for h in reversed([h for h in hops if h.sequence_index <= boundary_index]):
+                if h.observed_ip:
+                    effective_hop = h
+                    break
+
+        if effective_hop.observed_ip:
+            if effective_hop.sequence_index == boundary_index:
+                detail_str = (
+                    f"Candidate probable-origin IP recorded by the last "
+                    f"trusted hop (sequence_index={boundary_index}) at the "
+                    f"boundary of trusted receivers. This is the observed IP "
+                    f"as claimed in that trusted hop's own record, not a "
+                    f"claim from an untrusted party."
+                )
+            else:
+                detail_str = (
+                    f"Candidate probable-origin IP recorded by trusted hop "
+                    f"(sequence_index={effective_hop.sequence_index}, boundary={boundary_index}) "
+                    f"at the boundary of trusted receivers. This is the observed IP "
+                    f"as claimed in that trusted hop's own record, not a "
+                    f"claim from an untrusted party."
+                )
             facts.append(
                 _fact(
                     "routing-hop0-ip",
                     "routing",
                     "hop0_candidate_ip",
                     SignalState.PRESENT,
-                    boundary_hop.observed_ip,
-                    detail=(
-                        f"Candidate probable-origin IP recorded by the last "
-                        f"trusted hop (sequence_index={boundary_index}) at the "
-                        f"boundary of trusted receivers. This is the observed IP "
-                        f"as claimed in that trusted hop's own record, not a "
-                        f"claim from an untrusted party."
-                    ),
+                    effective_hop.observed_ip,
+                    detail=detail_str,
                 )
             )
         else:
@@ -326,7 +343,7 @@ def analyze_routing(email: CanonicalEmail) -> AnalyzerOutput:
                     None,
                     detail=(
                         f"Trusted boundary established at hop {boundary_index}, "
-                        f"but no IP literal could be extracted from its 'from' clause."
+                        f"but no IP literal could be extracted from any trusted hop's 'from' clause."
                     ),
                 )
             )
