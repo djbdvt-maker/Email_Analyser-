@@ -312,3 +312,26 @@ The following decisions are strictly locked across all work packages:
      - Added `v4.2.0` badge to `04_FRONTEND/src/components/Navbar.tsx` brand header.
   6. **Verification**:
      - Added 4 unit tests in `03_BACKEND/tests/test_support_and_diagnostics.py`. Full test suite passes at 466 passed, 1 skipped, 0 failures. Golden regression baseline matches 100% byte-for-byte.
+
+### DEC-016: Commercial Readiness - Security Governance, Legal Licensing & Statutory Admissibility (HZ-SEC)
+- **Date**: 2026-10-12
+- **Status**: ACCEPTED & IMPLEMENTED
+- **Context**: Commercial deployment and enterprise adoption require clear open-source licensing, complete third-party attributions, responsible use guidelines, vulnerability disclosure SLAs, comprehensive threat modeling, automated secret scanning in CI, and legally accurate framing of digital evidence admissibility under statutory frameworks (Section 63 Bharatiya Sakshya Adhiniyam / Section 65B Indian Evidence Act).
+- **Decision**:
+  1. **Licensing & Third-Party Notice**:
+     - Released core software under `LICENSE` (Apache License 2.0).
+     - Published `NOTICE` detailing third-party copyrights and attributions: FastAPI, Uvicorn, SQLAlchemy, Pydantic, React, Vite, Lucide Icons, MaxMind GeoLite2 data, and Nous Research Hermes 3 community terms.
+  2. **Security Vulnerability Reporting & Governance**:
+     - Published `SECURITY.md` defining private vulnerability disclosure workflow (`security@hopzero.local`), 24h acknowledgement SLA, 72h triage SLA, and 14-day security patch commitment.
+     - Published `CONTRIBUTING.md` enforcing the strict golden regression zero-score-drift policy for all PRs.
+     - Published `docs/THREAT_MODEL.md` documenting STRIDE threat assessments, untrusted input trust boundaries, subprocess sandbox worker isolation, and LLM prompt-injection resistance.
+  3. **Responsible Use & Softened Section 63 BSA Positioning**:
+     - Published `docs/RESPONSIBLE_USE.md` establishing defensive-only incident response positioning.
+     - Formulated `docs/TERMS_OF_SERVICE.md` and `docs/PRIVACY_POLICY.md` strictly enforcing softened legal wording:
+       *"Hash-verified, auditable evidence package structured to support the applicable Section 63 BSA certification process; HopZero does not certify legal admissibility."*
+     - Expressly disclaimed automatic judicial admissibility, reaffirming that formal electronic record certification requires human forensic custodian attestation.
+  4. **Automated Secret & PII Scanner**:
+     - Implemented `scripts/scan_secrets_and_pii.py` using optimized directory pruning, scanning >9,700 repository files for unredacted API tokens, private keys, and cloud credentials with 0 findings.
+  5. **Verification**:
+     - Added 4 unit tests in `03_BACKEND/tests/test_security_and_legal.py` verifying license integrity, policy completeness, softened statutory claims, and clean secret scans. All 4 passed.
+     - Golden baseline matches 100% byte-for-byte (21 scoring cases + 14 EML fixtures, 0 score drift).

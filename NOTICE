@@ -1,0 +1,44 @@
+HopZero Email Forensics & BotChain Tool Suite
+Copyright 2026 HopZero Contributors & Project Authors
+
+This product includes software developed by HopZero and open source contributors.
+
+================================================================================
+THIRD-PARTY SOFTWARE LICENSES AND ATTRIBUTIONS
+================================================================================
+
+1. FastAPI / Starlette
+   License: MIT License
+   Copyright (c) Sebastián Ramírez and encode contributors
+
+2. Uvicorn
+   License: BSD 3-Clause License
+   Copyright (c) Encode OSS Ltd.
+
+3. SQLAlchemy
+   License: MIT License
+   Copyright (c) 2005-2026 Michael Bayer and SQLAlchemy authors
+
+4. Pydantic
+   License: MIT License
+   Copyright (c) 2017-2026 Samuel Colvin and Pydantic contributors
+
+5. React & Vite
+   License: MIT License
+   Copyright (c) Meta Platforms, Inc. and Vite contributors
+
+6. Lucide Icons
+   License: ISC License
+   Copyright (c) 2026 Lucide Contributors
+
+7. GeoLite2 Data (MaxMind)
+   This product includes GeoLite2 data created by MaxMind, available from
+   https://www.maxmind.com under the Creative Commons Attribution-ShareAlike 4.0
+   International License or MaxMind GeoLite2 Free Database License.
+
+8. Hermes 3 / Nous Research
+   This product supports local on-premises inference with the Hermes 3 model
+   developed by Nous Research, used under the terms of the Llama 3.1 Community
+   License / Nous Research Open Model weights distribution terms.
+
+================================================================================
