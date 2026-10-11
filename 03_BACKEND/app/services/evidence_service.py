@@ -36,8 +36,17 @@ def ingest_artifact(
     sha256 = hashlib.sha256(content).hexdigest()
     md5 = hashlib.md5(content).hexdigest()
 
-    stored_name = f"{uuid.uuid4()}_{filename}"
-    path = os.path.join(_storage_root(), stored_name)
+    safe_filename = os.path.basename(filename).replace("\x00", "")
+    if not safe_filename:
+        safe_filename = "artifact.eml"
+    stored_name = f"{uuid.uuid4()}_{safe_filename}"
+    root = os.path.abspath(_storage_root())
+    path = os.path.abspath(os.path.join(root, stored_name))
+    if not path.startswith(root):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid filename: directory traversal detected.",
+        )
     with open(path, "wb") as f:
         f.write(content)
 

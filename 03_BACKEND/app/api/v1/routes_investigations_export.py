@@ -17,6 +17,13 @@ def export_chain_of_custody(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user)
 ):
+    from app.models import UserRole
+    if user.role not in (UserRole.ANALYST, UserRole.ADMIN):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: Only analysts and administrators can export forensic evidence packages.",
+        )
+
     inv = db.query(Investigation).filter(
         Investigation.id == investigation_id,
         Investigation.organization_id == user.organization_id

@@ -7,10 +7,11 @@ import hmac
 import hashlib
 import json
 from pathlib import Path
+import os
 from typing import Dict, Tuple, List, Optional
 
-# Default public release verification key (overridable via HOPZERO_RELEASE_KEY)
-DEFAULT_RELEASE_KEY = "hopzero-v4-official-release-signing-key-2026"
+def get_release_key() -> str:
+    return os.getenv("HOPZERO_RELEASE_KEY") or "hopzero-v4-official-release-signing-key-2026"
 
 
 def compute_file_sha256(path: Path) -> str:
@@ -44,17 +45,21 @@ def compute_manifest_checksums(root_dir: Path, exclude_patterns: Optional[List[s
     return checksums
 
 
-def sign_manifest(checksums: Dict[str, str], secret_key: str = DEFAULT_RELEASE_KEY) -> str:
+def sign_manifest(checksums: Dict[str, str], secret_key: Optional[str] = None) -> str:
     """Computes HMAC-SHA256 signature over canonically serialized manifest."""
+    if secret_key is None:
+        secret_key = get_release_key()
     canonical_data = json.dumps(checksums, sort_keys=True).encode("utf-8")
     sig = hmac.new(secret_key.encode("utf-8"), canonical_data, hashlib.sha256).hexdigest()
     return sig
 
 
 def verify_manifest_signature(
-    checksums: Dict[str, str], signature: str, secret_key: str = DEFAULT_RELEASE_KEY
+    checksums: Dict[str, str], signature: str, secret_key: Optional[str] = None
 ) -> bool:
     """Validates HMAC-SHA256 signature using constant-time comparison."""
+    if secret_key is None:
+        secret_key = get_release_key()
     expected_sig = sign_manifest(checksums, secret_key)
     return hmac.compare_digest(expected_sig, signature)
 

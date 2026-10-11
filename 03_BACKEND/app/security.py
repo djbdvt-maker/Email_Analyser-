@@ -14,7 +14,11 @@ from typing import Optional
 from fastapi import Depends, Header, HTTPException, status
 import bcrypt
 from fastapi.security import OAuth2PasswordBearer
-from jose import jwt, JWTError
+try:
+    import jwt
+    from jwt.exceptions import PyJWTError as JWTError
+except ImportError:
+    from jose import jwt, JWTError
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
@@ -64,11 +68,11 @@ def get_current_user(
     db: Session = Depends(get_db),
 ) -> User:
     # Extension API Key Authentication Support
-    if settings.hopzero_api_key and token == settings.hopzero_api_key:
-        # Fallback for the extension: authenticate as the primary admin user
+    if settings.hopzero_api_key and secrets.compare_digest(token, settings.hopzero_api_key):
+        # Fallback for the extension: authenticate with Analyst role (least privilege)
         user = db.query(User).filter(User.is_active == True).first()
         if not user:
-            # Auto-create a default admin if none exists (handles fresh installs gracefully)
+            # Auto-create a default analyst if none exists (handles fresh installs gracefully)
             from app.models import Organization, UserRole
             org = db.query(Organization).first()
             if not org:
@@ -77,9 +81,9 @@ def get_current_user(
                 db.flush()
             user = User(
                 organization_id=org.id,
-                email="admin@hopzero.test",
+                email="analyst@hopzero.test",
                 hashed_password="[API_KEY_LOGIN_NO_PASSWORD]",
-                role=UserRole.ADMIN,
+                role=UserRole.ANALYST,
                 is_active=True,
             )
             db.add(user)

@@ -57,7 +57,7 @@ def _authenticate_ingest_caller(
         token = auth_header[7:].strip()
         
         # Innovative Extension Authentication Support (API Key fallback)
-        if settings.hopzero_api_key and token == settings.hopzero_api_key:
+        if settings.hopzero_api_key and secrets.compare_digest(token, settings.hopzero_api_key):
             user = db.query(User).filter(User.is_active == True).first()
             if not user:
                 from app.models import Organization, UserRole
@@ -68,9 +68,9 @@ def _authenticate_ingest_caller(
                     db.flush()
                 user = User(
                     organization_id=org.id,
-                    email="admin@hopzero.test",
+                    email="analyst@hopzero.test",
                     hashed_password="[API_KEY_LOGIN_NO_PASSWORD]",
-                    role=UserRole.ADMIN,
+                    role=UserRole.ANALYST,
                     is_active=True,
                 )
                 db.add(user)

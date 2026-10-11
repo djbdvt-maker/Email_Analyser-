@@ -16,10 +16,10 @@ laya==0.3.20
 Mako==1.4.1
 MarkupSafe==3.0.3
 maxminddb==3.2.0
-passlib==1.7.4
 pluggy==1.6.0
 psycopg2-binary==2.9.9
 pycparser==3.0
+pyjwt==2.15.1
 pydantic==2.9.2
 pydantic-settings==2.5.2
 pydantic_core==2.23.4

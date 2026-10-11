@@ -69,15 +69,11 @@ from app.config import get_settings
 _settings = get_settings()
 _cors_origins = [o.strip() for o in _settings.cors_origins.split(",") if o.strip()]
 
-# Chrome extensions have dynamic origins (chrome-extension://<id>)
-# In development mode, allow all origins for easier testing
-if _settings.environment == "development":
-    _cors_origins = ["*"]
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,
-    allow_credentials=True if _settings.environment != "development" else False,
+    allow_origin_regex=r"^chrome-extension://[a-z]{32}$",
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )

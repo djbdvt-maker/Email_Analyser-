@@ -375,3 +375,30 @@ The following decisions are strictly locked across all work packages:
      - Added 5 unit tests in `03_BACKEND/tests/test_licensing.py`. All 5 passed.
      - Full test suite passes at 479 passed, 1 skipped, 0 failures.
      - Golden baseline matches 100% byte-for-byte (21 scoring cases + 14 EML fixtures, 0 score drift).
+
+### DEC-019: Enterprise Security Audit Remediation & Defense-in-Depth Hardening
+- **Date**: 2026-10-12
+- **Status**: ACCEPTED & IMPLEMENTED
+- **Context**: A comprehensive 5-point enterprise security audit was conducted covering credentials/secrets, server-side authentication/authorization, input sanitization and SSRF defenses, dependency modernizations, and rate-limiting. All identified vulnerabilities were remediated with enterprise-grade defense-in-depth patterns.
+- **Decision**:
+  1. **Secrets Management**:
+     - Extracted internal authority secrets in `hopzero.core.licensing` (`HOPZERO_LICENSE_SECRET`) and `hopzero.core.signatures` (`HOPZERO_RELEASE_KEY`) to prioritize environment variables over fallbacks.
+     - Changed default database URL in `03_BACKEND/app/config.py` to local SQLite, removing hardcoded PostgreSQL credentials.
+     - Documented all signing and licensing variables in `.env.example` Section 8, and added `*.key` / `license.key` patterns to `.gitignore`.
+  2. **Server-Side Role & Identity Enforcement**:
+     - Hardened API key checks across `security.py`, `routes_ingest.py`, and `routes_tool.py` using `secrets.compare_digest` to prevent timing attacks.
+     - Demoted default extension/tool role from `ADMIN` to `ANALYST` (principle of least privilege).
+     - Added strict server-side role gating (`UserRole.ANALYST`, `UserRole.ADMIN`) on sensitive investigation audit events (`investigation_service.py`) and chain-of-custody export packages (`routes_investigations_export.py`).
+     - Added sliding-window in-memory rate limiting to `POST /api/v1/auth/login` (10 requests/min per IP, returning HTTP 429) to thwart credential brute-forcing.
+  3. **Input Validation, SSRF & Path Traversal Mitigations**:
+     - Hardened Playwright sandbox runner (`routes_sandbox.py`) with strict URL validation blocking non-http/https protocols, loopback (`localhost`, `127.0.0.1`, `::1`), RFC 1918 private subnets (`10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`), and cloud metadata (`169.254.169.254`). Bounded sandbox concurrency via `asyncio.Semaphore(2)`.
+     - Sanitized uploaded evidence filenames in `evidence_service.py` using `os.path.basename` and verified resolved paths stay within artifact storage root.
+     - Enforced string length bounds on `AnalystActionCreate` schema with `Field(..., max_length=...)`.
+     - Tightened CORS middleware in `main.py` from wildcard `*` to configured explicit origins and Chrome extension ID regex (`^chrome-extension://[a-z]{32}$`).
+  4. **Dependency Modernization**:
+     - Upgraded JWT processing to `pyjwt[crypto]` with transparent fallback for legacy environments.
+     - Purged unmaintained `passlib` dependency in favor of direct, maintained `bcrypt`.
+  5. **Verification**:
+     - Added 9 unit tests in `03_BACKEND/tests/test_security_audit_remediation.py` covering SSRF blocks, path traversal sanitization, login rate limiting, role gating on audit logs and exports, and env secret resolution. All 9 passed.
+     - Golden baseline matches 100% byte-for-byte (`scripts/check_golden.py`, 0 score drift).
+

@@ -354,6 +354,11 @@ def record_analyst_action(
 
 def get_investigation_audit_events(db: Session, *, user: User, investigation_id: str) -> list[AuditEvent]:
     inv = get_investigation(db, user=user, investigation_id=investigation_id)
+    if user.role not in (UserRole.ANALYST, UserRole.ADMIN):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Forbidden: Custodial audit trails are restricted to analysts and administrators.",
+        )
     return (
         db.query(AuditEvent)
         .filter(AuditEvent.investigation_id == inv.id)

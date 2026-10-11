@@ -12,7 +12,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    database_url: str = "postgresql+psycopg2://hopzero:hopzero@localhost:5432/hopzero"
+    database_url: str = "sqlite:///./storage/hopzero.db"
     test_database_url: str = "sqlite:///./test.db"
 
     jwt_secret_key: str = "change-me-in-production"

@@ -69,9 +69,9 @@ class InvestigationStatusUpdate(BaseModel):
 
 
 class AnalystActionCreate(BaseModel):
-    action: str
-    note: Optional[str] = None
-    falsePositiveReason: Optional[str] = None
+    action: str = Field(..., max_length=100)
+    note: Optional[str] = Field(None, max_length=4000)
+    falsePositiveReason: Optional[str] = Field(None, max_length=2000)
 
 
 class AnalystActionOut(BaseModel):

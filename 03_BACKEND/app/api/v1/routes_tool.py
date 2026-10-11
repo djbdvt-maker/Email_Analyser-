@@ -16,6 +16,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import secrets
 from typing import Any, Dict, List, Optional
 
 from fastapi import (
@@ -244,7 +245,7 @@ def _get_tool_user(
 
     if auth_header and auth_header.startswith("Bearer "):
         token = auth_header[7:].strip()
-        if settings.hopzero_api_key and token == settings.hopzero_api_key:
+        if settings.hopzero_api_key and secrets.compare_digest(token, settings.hopzero_api_key):
             user = db.query(User).filter(User.is_active == True).first()
             if user:
                 return user

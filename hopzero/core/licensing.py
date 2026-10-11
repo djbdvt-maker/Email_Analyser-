@@ -15,7 +15,8 @@ from typing import List, Optional
 
 from hopzero.core.paths import get_app_data_root
 
-DEFAULT_LICENSE_SECRET = "hopzero-commercial-master-licensing-authority-2026"
+def get_license_secret() -> str:
+    return os.getenv("HOPZERO_LICENSE_SECRET") or "hopzero-commercial-master-licensing-authority-2026"
 
 VALID_EDITIONS = {"Community", "Lite", "Standard", "Pro", "Server"}
 
@@ -52,13 +53,16 @@ def generate_license_key(
     expires_at: str,
     max_seats: int = 5,
     features: Optional[List[str]] = None,
-    secret_key: str = DEFAULT_LICENSE_SECRET,
+    secret_key: Optional[str] = None,
     issued_at: Optional[str] = None,
 ) -> str:
     """
     Generates a cryptographically signed offline commercial license token.
     Format: HZ-<EDITION>-<BASE64_PAYLOAD>-<HMAC_SIGNATURE>
     """
+    if secret_key is None:
+        secret_key = get_license_secret()
+
     if edition not in VALID_EDITIONS:
         raise ValueError(f"Invalid edition '{edition}'. Must be one of {VALID_EDITIONS}")
 
@@ -94,7 +98,7 @@ def generate_license_key(
 
 def verify_license_key(
     key_string: str,
-    secret_key: str = DEFAULT_LICENSE_SECRET,
+    secret_key: Optional[str] = None,
     now: Optional[datetime] = None,
 ) -> LicenseInfo:
     """
@@ -120,6 +124,9 @@ def verify_license_key(
         )
 
     _, edition_hdr, payload_b64, signature = parts
+
+    if secret_key is None:
+        secret_key = get_license_secret()
 
     # 1. Verify cryptographic signature
     sign_target = f"{edition_hdr.capitalize()}:{payload_b64}".encode("utf-8")
