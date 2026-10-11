@@ -42,7 +42,7 @@ jobs:
         python scripts/package_release.py
 
     - name: Create GitHub Release with Cryptographic Checksums
-      uses: softprops/action-gh-release@v2
+      uses: softprops/action-gh-release@v3
       with:
         files: |
           dist/releases/hopzero-*-standalone.zip
