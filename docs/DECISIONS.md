@@ -290,5 +290,25 @@ The following decisions are strictly locked across all work packages:
      - Created `.github/dependabot.yml` tracking `pip`, `npm`, and GitHub Actions.
      - Created `.github/workflows/release.yml` triggering on `v*` tags to build and publish signed release archives (`hopzero-4.2.0-standalone.zip` and `.sha256`).
      - Updated `CHANGELOG.md` with semantic version `[4.2.0]`.
+### DEC-015: Commercial Readiness - Diagnostics Redaction, Support Architecture & Zero-Telemetry
+- **Date**: 2026-10-12
+- **Status**: ACCEPTED & IMPLEMENTED
+- **Context**: Enterprise commercial support requires a frictionless diagnostic export mechanism that guarantees zero PII or secret leakage, standardized issue templates, clear operational documentation, visible UI release badges, and an uncompromising zero-telemetry default.
+- **Decision**:
+  1. **Sanitized Support Diagnostics & Redaction Engine**:
+     - Implemented `scripts/diagnostics.py` supporting `python scripts/diagnostics.py --export`.
+     - Automatically aggregates doctor health checks, hardware profiles, environment snapshots, and logs.
+     - Strips and masks PII and secrets using regex rules: emails (`[REDACTED_EMAIL]`), external IPs (`[REDACTED_IP]`), JWTs (`[REDACTED_JWT_TOKEN]`), and credentials (`[REDACTED_CREDENTIAL]`).
+     - Packages results into `hopzero_diagnostics_<timestamp>.zip`.
+  2. **System Diagnostics Endpoints**:
+     - Added `GET /api/v1/system/diagnostics` and `GET /api/v1/system/diagnostics/export` in `03_BACKEND/app/api/v1/routes_system.py`.
+  3. **Standardized Issue Templates & Troubleshooting**:
+     - Added `.github/ISSUE_TEMPLATE/bug_report.yml` requiring `doctor` / `diagnostics --export` output.
+     - Added `.github/ISSUE_TEMPLATE/feature_request.yml`.
+     - Published `docs/TROUBLESHOOTING.md` covering port selection, local LLM setup, and air-gapped isolation.
+  4. **Strict Zero-Telemetry Default**:
+     - Published `docs/TELEMETRY.md` formalizing the zero-telemetry guarantee (0 tracking beacons, 0 cloud dependencies, 100% on-premises execution).
+  5. **Prominent UI Release Badge**:
+     - Added `v4.2.0` badge to `04_FRONTEND/src/components/Navbar.tsx` brand header.
   6. **Verification**:
-     - Added 4 unit tests in `03_BACKEND/tests/test_ci_and_release_automation.py`. Full test suite passes at 462 passed, 1 skipped, 0 failures. Golden regression baseline matches 100% byte-for-byte.
+     - Added 4 unit tests in `03_BACKEND/tests/test_support_and_diagnostics.py`. Full test suite passes at 466 passed, 1 skipped, 0 failures. Golden regression baseline matches 100% byte-for-byte.

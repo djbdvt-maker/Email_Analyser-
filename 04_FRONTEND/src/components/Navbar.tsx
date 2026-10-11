@@ -39,6 +39,7 @@ export const Navbar: React.FC<Props> = ({ onUploadClick, onHomeClick, selectedId
         </div>
         <span>HopZero</span>
         <span className="brand-badge">SIH 2026 FORENSICS</span>
+        <span className="version-badge" style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '4px', background: 'rgba(255,255,255,0.1)', color: '#94a3b8', border: '1px solid rgba(255,255,255,0.15)', marginLeft: '8px' }}>v4.2.0</span>
       </div>
 
       <div className="nav-actions">

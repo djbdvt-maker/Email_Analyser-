@@ -1,0 +1,49 @@
+name: Bug Report
+description: File a bug report or regression report for HopZero.
+title: "[BUG]: "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting an issue!
+        Before submitting, please run `python scripts/doctor.py` and attach the output of `python scripts/diagnostics.py --export`.
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: A clear and concise description of what the problem is.
+      placeholder: Describe the unexpected behavior...
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Exact steps to reproduce the issue.
+      placeholder: |
+        1. Ingest email fixture 'sample.eml'
+        2. Execute analysis run
+        3. Observe error...
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics_output
+    attributes:
+      label: Diagnostics Output
+      description: Output from `python scripts/doctor.py` or contents of `diagnostics_report.json`. (All PII is sanitized automatically).
+      render: shell
+      placeholder: Paste output of 'python scripts/doctor.py' here...
+    validations:
+      required: true
+  - type: dropdown
+    id: edition
+    attributes:
+      label: HopZero Edition
+      options:
+        - Standard (Default Local Ollama)
+        - Lite (SQLite / Minimal)
+        - Pro (Workstation GPU Offload)
+        - Server (PostgreSQL Multi-User)
+    validations:
+      required: true

@@ -39,3 +39,24 @@ def get_system_doctor():
             for c in checks
         ]
     }
+
+
+@router.get("/diagnostics", summary="Get sanitized support diagnostics")
+def get_system_diagnostics():
+    """Returns privacy-preserving, redacted system diagnostics JSON."""
+    from scripts.diagnostics import collect_sanitized_diagnostics
+    return collect_sanitized_diagnostics()
+
+
+@router.get("/diagnostics/export", summary="Export sanitized diagnostics archive")
+def export_system_diagnostics():
+    """Generates and downloads a redacted diagnostics zip bundle."""
+    from fastapi.responses import FileResponse
+    from scripts.diagnostics import export_diagnostics_archive
+    zip_path = export_diagnostics_archive()
+    return FileResponse(
+        path=str(zip_path),
+        filename=zip_path.name,
+        media_type="application/zip"
+    )
+
