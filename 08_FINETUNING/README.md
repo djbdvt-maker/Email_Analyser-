@@ -1,6 +1,9 @@
-# HopZero AI Fine-Tuning Pipeline
+# HopZero AI Fine-Tuning Pipeline (EXPERIMENTAL)
 
-This directory contains everything you need to fine-tune your own version of Llama-3-8B specifically on the HopZero forensic schemas to massively improve precision and speed when running locally on Ollama.
+> [!WARNING]
+> **EXPERIMENTAL RESEARCH AREA**: This directory is for experimental research only and is **NOT** part of the production runtime or release distribution. In accordance with the HopZero architectural roadmap, fine-tuning is deferred and not enabled in the default application. No core modules import from this directory.
+
+This directory contains standalone scripts to explore fine-tuning Llama-3 models on forensic schemas.
 
 ## 1. Generate the Dataset
 Run the `dataset_generator.py` script. It parses all the raw `.eml` test emails from your `07_TEST_DATA` folder and maps them against the rules defined in their respective `manifest.json` files to automatically generate a `train.jsonl` file in ShareGPT format.

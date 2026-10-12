@@ -4,21 +4,24 @@ from app.models import UserRole, Investigation, InvestigationStatus
 from app.security import get_current_user
 from app.api.v1.routes_sandbox import _validate_safe_sandbox_url
 from app.api.v1.routes_auth import _LOGIN_ATTEMPTS, _MAX_ATTEMPTS
-from hopzero.core.licensing import get_license_secret
-from hopzero.core.signatures import get_release_key
+from hopzero.core.licensing import get_trusted_public_keys, OFFICIAL_LICENSE_PUBLIC_KEYS
+from hopzero.core.signatures import get_trusted_release_keys, OFFICIAL_RELEASE_PUBLIC_KEYS
 from tests.conftest import auth_headers, _make_user
 
 
-def test_license_secret_env_override(monkeypatch):
-    """Verify HOPZERO_LICENSE_SECRET environment variable is respected."""
-    monkeypatch.setenv("HOPZERO_LICENSE_SECRET", "custom_enterprise_secret_12345")
-    assert get_license_secret() == "custom_enterprise_secret_12345"
+def test_ed25519_trusted_public_keys_env_override(monkeypatch):
+    """Verify HOPZERO_TRUSTED_LICENSE_PUBLIC_KEYS and RELEASE keys can be extended via env."""
+    custom_key = "1" * 64
+    monkeypatch.setenv("HOPZERO_TRUSTED_LICENSE_PUBLIC_KEYS", custom_key)
+    monkeypatch.setenv("HOPZERO_TRUSTED_RELEASE_PUBLIC_KEYS", custom_key)
 
+    trusted_lic = get_trusted_public_keys()
+    trusted_rel = get_trusted_release_keys()
 
-def test_release_key_env_override(monkeypatch):
-    """Verify HOPZERO_RELEASE_KEY environment variable is respected."""
-    monkeypatch.setenv("HOPZERO_RELEASE_KEY", "custom_release_signing_key_999")
-    assert get_release_key() == "custom_release_signing_key_999"
+    assert bytes.fromhex(custom_key) in trusted_lic
+    assert bytes.fromhex(custom_key) in trusted_rel
+    assert len(OFFICIAL_LICENSE_PUBLIC_KEYS) > 0
+    assert len(OFFICIAL_RELEASE_PUBLIC_KEYS) > 0
 
 
 def test_ssrf_url_validation_blocks_private_and_local():

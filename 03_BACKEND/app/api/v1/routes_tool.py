@@ -45,6 +45,7 @@ from app.models import (
 )
 from app.schemas import ActionDraftCreate, ActionDraftOut
 from app.qualification_registry import REGISTRY_VERSION, VALIDITY_RULE_VERSION
+from hopzero import __version__ as HOPZERO_VERSION
 REGISTRY_RELEASE_HASH = "1047f1db05dd6fe51d20e124d3e42e7d7a20e985993afddfc08759942ee2a44d"
 from app.security import assert_same_org, get_current_user
 from app.services import evidence_service
@@ -58,7 +59,7 @@ router = APIRouter(tags=["tool-facing-api"])
 MAX_ARTIFACT_BYTES = 25 * 1024 * 1024  # 25MB standard RFC822 limit
 
 SYSTEM_VERSION_INFO = {
-    "backend_version": "2.0.0",
+    "backend_version": HOPZERO_VERSION,
     "forensics_version": "1.0.0",
     "registry_version": REGISTRY_VERSION,
     "registry_sha256": REGISTRY_RELEASE_HASH,
@@ -77,7 +78,7 @@ SYSTEM_VERSION_INFO = {
 TOOL_MANIFEST = {
     "id": "hopzero-email-forensics",
     "name": "HopZero Email Forensics",
-    "version": "2.0.0",
+    "version": HOPZERO_VERSION,
     "description": "Deterministic, hash-verified email forensic analysis engine and threat triage tool.",
     "category": "security_forensics",
     "capabilities": [

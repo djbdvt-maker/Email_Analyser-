@@ -7,8 +7,8 @@
 [![Release](https://img.shields.io/badge/release-v4.2.0-blue.svg)](CHANGELOG.md)
 [![Python](https://img.shields.io/badge/python-3.12.10-green.svg)](pyproject.toml)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Zero-Telemetry](https://img.shields.io/badge/telemetry-zero%20cloud%20leaks-success.svg)](docs/TELEMETRY.md)
-[![Golden Regression](https://img.shields.io/badge/golden%20baseline-100%25%20byte--identical-success.svg)](05_QA/golden/golden_outputs.json)
+[![Zero-Telemetry](https://img.shields.io/badge/telemetry-local%20only-success.svg)](docs/TELEMETRY.md)
+[![Golden Regression](https://img.shields.io/badge/golden%20baseline-verified%20deterministic-success.svg)](05_QA/golden/golden_outputs.json)
 
 [**Quickstart**](#-quickstart-per-os) • [**Architecture**](#-system-architecture) • [**5-Level Disclosure**](#-5-level-progressive-disclosure) • [**Support Matrix**](#-support-matrix) • [**Documentation**](docs/)
 
@@ -20,10 +20,10 @@
 
 **HopZero** is an enterprise-grade digital email forensics and incident response (DFIR) platform engineered for security operations center (SOC) analysts and digital investigators.
 
-Unlike opaque cloud scanners or generative AI black-boxes, HopZero operates with **100% on-premises determinism**:
-- **0 Cloud Leaks**: Completely functional in air-gapped environments without external network connections.
-- **0 Score Drift**: Threat scoring is strictly computed by a compiled 41-rule qualification registry across 9 capped buckets.
-- **0 LLM Scoring Authority**: Local LLM reasoning (`hermes3:3b`) serves strictly advisory roles through a 4-gate trust boundary; generative models cannot alter scores or trigger mitigation floors.
+Unlike opaque cloud scanners or generative AI black-boxes, HopZero is designed for **on-premises determinism**:
+- **On-Premises Privacy**: Operates locally by default without external network transmission. (Optional threat intelligence lookups and sandbox screenshot rendering require explicit user enablement).
+- **Deterministic Threat Scoring**: Threat scoring is strictly computed by a compiled 43-qualification registry across 9 capped buckets and 6 critical floors. The golden regression suite verifies byte-identical results on included test fixtures.
+- **Zero LLM Scoring Authority**: Local LLM reasoning (`hermes3:3b`) serves strictly advisory roles through a 4-gate trust boundary; generative models cannot alter scores or trigger mitigation floors.
 - **Auditable Evidence**: Produces hash-verified evidence packages structured to support the applicable Section 63 Bharatiya Sakshya Adhiniyam (BSA) / Section 65B Indian Evidence Act certification processes (*HopZero does not certify legal admissibility*).
 
 ---
@@ -107,7 +107,7 @@ Checks:
                      ▼                                                 ▼
 ┌──────────────────────────────────────────┐     ┌──────────────────────────────────────────┐
 │      DETERMINISTIC FORENSIC COMPILER     │     │       4-GATE TRUST BOUNDARY (LLM)        │
-│  • 41-Rule Qualification Registry        │     │  • Resident Model: hermes3:3b            │
+│  • 43-Qualification Registry             │     │  • Resident Model: hermes3:3b            │
 │  • 9 Capped Severity Buckets             │     │  • Context: 4096 tokens, temp=0.0        │
 │  • Hard Category Floors (CF-01 .. CF-06) │     │  • Zero Scoring Authority Invariant      │
 │  • Output: Exact Deterministic Score     │     │  • Output: Advisory Summary & Hypotheses │
@@ -117,7 +117,7 @@ Checks:
 ┌───────────────────────────────────────────────────────────────────────────────────────────┐
 │                                 PROGRESSIVE DISCLOSURE UI                                 │
 │  L1: Consumer Verdict  │  L2: Why & Action  │  L3: Technical Evidence                     │
-│  L4: 41-Rule Findings  │  L5: Audit Trail & Section 63 BSA Evidence Package               │
+│  L4: 43-Qualification Findings  │  L5: Audit Trail & Section 63 BSA Evidence Package      │
 └─────────────────────────────────────────────┬─────────────────────────────────────────────┘
                                               ▼
 ┌───────────────────────────────────────────────────────────────────────────────────────────┐
@@ -138,7 +138,7 @@ HopZero accommodates both non-technical users and courtroom forensic witnesses:
 | **Level 1: Consumer Verdict** | End-users, Employees | Plain-English safety badge (`SAFE`, `SUSPICIOUS`, `DANGEROUS`), confidence score. |
 | **Level 2: Why & Action** | Frontline Helpdesk, SOC T1 | Specific threat highlights, human-authorized `ActionDrafts` (quarantine, block). |
 | **Level 3: Technical Evidence** | SOC Analysts, Incident Responders | Received-hop transit lineage, SPF/DKIM/DMARC matrix, lookalike domain distance. |
-| **Level 4: 41-Rule Findings** | Senior Forensics, Engineers | Raw rule triggers, 9-bucket score breakdown, category floors, RFC anomalies. |
+| **Level 4: 43-Qualification Findings** | Senior Forensics, Engineers | Raw rule triggers, 9-bucket score breakdown, category floors, RFC anomalies. |
 | **Level 5: Audit & Export** | Legal Counsel, Compliance, Court | Exact SHA-256 reproducibility fingerprint, custodial log, Section 63 BSA evidence bundle. |
 
 ---
@@ -166,6 +166,14 @@ To safeguard systems against malicious denial-of-service and parser exhaustion e
 2. **Decompression Ceiling**: ZIP and archive uncompressed size limit is capped at `10 MB`.
 3. **Attachment Count**: A maximum of `50` attachments are extracted per email message.
 4. **Single Local Model**: Inference is locked to `hermes3:3b` (`Q4_K_M`, 4096 ctx) to maintain low memory footprints and guarantee reproducibility across installations.
+
+---
+
+## ⚖️ What HopZero Does Not Guarantee
+
+- **Legal Admissibility**: HopZero generates structured evidence packages with cryptographic hash chains, but does not provide legal representation; evidentiary admissibility remains subject to judicial discretion and jurisdictional rules.
+- **Novel Evasion / Zero-Days**: Threat scoring is strictly bounded by observable technical signals. Novel evasions or zero-day exploits with no extractable indicators may not trigger elevated scores.
+- **Total Air-Gap Isolation Under All Configurations**: While default operation is fully local and offline, optional features (e.g. sandbox browser capture, external reputation enrichment) make outbound network requests when explicitly configured.
 
 ---
 

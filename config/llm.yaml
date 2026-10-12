@@ -1,0 +1,29 @@
+# ==============================================================================
+# HopZero Shared Local LLM Configuration (v1)
+# ==============================================================================
+# Single configuration for all HopZero local LLM inference (Ollama).
+# Environment variables (e.g. HOPZERO_LLM_*) override values in this file.
+
+# Base URL for the local Ollama daemon
+base_url: "http://127.0.0.1:11434"
+
+# Model name (verified resident model: < 4 GB VRAM)
+model: "hermes3:3b"
+
+# Context window size in tokens
+num_ctx: 4096
+
+# Model retention time in memory to prevent frequent unloads/reloads
+keep_alive: "5m"
+
+# Sampling temperature (deterministic for forensic analysis)
+temperature: 0.0
+
+# Deterministic random seed
+seed: 42
+
+# Per-request HTTP timeout in seconds
+request_timeout_s: 30.0
+
+# Maximum simultaneous requests to the local engine
+max_concurrency: 4

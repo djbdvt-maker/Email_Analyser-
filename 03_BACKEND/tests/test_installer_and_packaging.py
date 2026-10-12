@@ -14,6 +14,11 @@ from scripts.install import InstallTransaction, check_prerequisites
 
 
 def test_signature_signing_and_verification(tmp_path):
+    from cryptography.hazmat.primitives.asymmetric import ed25519
+    test_priv = ed25519.Ed25519PrivateKey.generate()
+    test_pub_bytes = test_priv.public_key().public_bytes_raw()
+    wrong_pub_bytes = ed25519.Ed25519PrivateKey.generate().public_key().public_bytes_raw()
+
     f1 = tmp_path / "app.py"
     f1.write_text("print('hello')", encoding="utf-8")
     f2 = tmp_path / "config.json"
@@ -24,14 +29,13 @@ def test_signature_signing_and_verification(tmp_path):
     assert "app.py" in manifest
     assert "config.json" in manifest
 
-    # Sign manifest
-    sig = sign_manifest(manifest, secret_key="test-key")
+    # Sign manifest with Ed25519 private key
+    sig = sign_manifest(manifest, private_key=test_priv)
     assert isinstance(sig, str)
-    assert len(sig) == 64  # SHA-256 hex string
 
     # Verify signature
-    assert verify_manifest_signature(manifest, sig, secret_key="test-key")
-    assert not verify_manifest_signature(manifest, sig, secret_key="wrong-key")
+    assert verify_manifest_signature(manifest, sig, trusted_public_keys=[test_pub_bytes])
+    assert not verify_manifest_signature(manifest, sig, trusted_public_keys=[wrong_pub_bytes])
 
     # Directory verification
     is_valid, errors = verify_directory_against_manifest(tmp_path, manifest)
@@ -73,3 +77,33 @@ def test_check_prerequisites():
     prereqs = check_prerequisites(offline=True)
     assert "ok" in prereqs
     assert isinstance(prereqs["reasons"], list)
+
+
+def test_package_release_filtering_rules():
+    from scripts.package_release import should_include_path
+
+    # Strictly excluded paths
+    assert not should_include_path(".env")
+    assert not should_include_path(".env.local")
+    assert not should_include_path("03_BACKEND/.env")
+    assert not should_include_path("test.db")
+    assert not should_include_path("03_BACKEND/storage/hopzero.db")
+    assert not should_include_path("07_TEST_DATA/test_emails/20030228_easy_ham/0001.txt")
+    assert not should_include_path("08_FINETUNING/train.py")
+    assert not should_include_path("tools/sign_release.py")
+    assert not should_include_path(".venv/Scripts/python.exe")
+    assert not should_include_path("03_BACKEND/__pycache__/main.cpython-312.pyc")
+    assert not should_include_path("diff.patch")
+    assert not should_include_path("release_private.key")
+
+    # Strictly included paths
+    assert should_include_path("pyproject.toml")
+    assert should_include_path("requirements.lock")
+    assert should_include_path(".env.example")
+    assert should_include_path("README.md")
+    assert should_include_path("01_REGISTRY/releases/registry-v1.json")
+    assert should_include_path("02_FORENSICS/hopzero_forensics/parser.py")
+    assert should_include_path("03_BACKEND/app/main.py")
+    assert should_include_path("hopzero/core/licensing.py")
+    assert should_include_path("docs/TEST_DATA.md")
+

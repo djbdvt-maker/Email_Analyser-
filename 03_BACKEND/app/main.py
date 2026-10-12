@@ -48,9 +48,11 @@ def custom_generate_unique_id(route: APIRoute) -> str:
     return clean_name
 
 
+from hopzero import __version__ as HOPZERO_VERSION
+
 app = FastAPI(
     title="HopZero Backend",
-    version="2.0.0",
+    version=HOPZERO_VERSION,
     lifespan=lifespan,
     generate_unique_id_function=custom_generate_unique_id,
     description=(

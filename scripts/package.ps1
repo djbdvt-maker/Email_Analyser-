@@ -1,19 +1,25 @@
-$source = "C:\Users\HELLO\Desktop\sih"
-$destination = "C:\Users\HELLO\Desktop\HopZero_Final_Submission.zip"
-if (Test-Path $destination) { Remove-Item $destination }
-Add-Type -AssemblyName System.IO.Compression.FileSystem
+# scripts/package.ps1
+# Cross-platform PowerShell launcher for HopZero release packager
+param(
+    [string]$Version,
+    [string]$KeyFile,
+    [switch]$SkipFrontendBuild,
+    [switch]$Unsigned
+)
 
-$tempDir = Join-Path $env:TEMP "HopZero_Temp_Package"
-if (Test-Path $tempDir) { Remove-Item -Recurse -Force $tempDir }
-New-Item -ItemType Directory -Path $tempDir | Out-Null
+$RepoRoot = Resolve-Path (Join-Path $PSScriptRoot "..")
+$PythonBin = Join-Path $RepoRoot ".venv\Scripts\python.exe"
+if (-not (Test-Path $PythonBin)) {
+    $PythonBin = "python"
+}
 
-Copy-Item -Path "$source\*" -Destination $tempDir -Recurse -Exclude ".venv", "node_modules", "__pycache__", ".pytest_cache", "dist", "*.egg-info", "storage", ".git"
-Remove-Item -Path "$tempDir\03_BACKEND\.venv" -Recurse -Force -ErrorAction SilentlyContinue
-Remove-Item -Path "$tempDir\04_FRONTEND\node_modules" -Recurse -Force -ErrorAction SilentlyContinue
-Remove-Item -Path "$tempDir\03_BACKEND\storage" -Recurse -Force -ErrorAction SilentlyContinue
-Get-ChildItem -Path $tempDir -Recurse -Filter "__pycache__" | Remove-Item -Recurse -Force
-Get-ChildItem -Path $tempDir -Recurse -Filter ".pytest_cache" | Remove-Item -Recurse -Force
+$Arguments = @((Join-Path $PSScriptRoot "package_release.py"))
+if ($Version) { $Arguments += @("--version", $Version) }
+if ($KeyFile) { $Arguments += @("--key-file", $KeyFile) }
+if ($SkipFrontendBuild) { $Arguments += "--skip-frontend-build" }
+if ($Unsigned) { $Arguments += "--unsigned" }
 
-[System.IO.Compression.ZipFile]::CreateFromDirectory($tempDir, $destination)
-Remove-Item -Recurse -Force $tempDir
-Write-Host "Zipped to $destination"
+& $PythonBin @Arguments
+if ($LASTEXITCODE -ne 0) {
+    exit $LASTEXITCODE
+}

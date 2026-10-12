@@ -7,8 +7,32 @@ on:
     branches: [ "main", "master" ]
 
 jobs:
+  lint-and-hygiene:
+    name: Hygiene & Claims Checks
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+
+    - name: Line Ending Check (LF Enforced)
+      run: python scripts/check_crlf.py
+
+    - name: Secret and PII Scan
+      run: python scripts/scan_secrets_and_pii.py
+
+    - name: Documentation and Marketing Claims Verification
+      run: python scripts/check_claims.py
+
   matrix-test:
     name: Test (${{ matrix.os }}, Py ${{ matrix.python-version }})
+    needs: [lint-and-hygiene]
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -40,6 +64,14 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.lock
+        pip install -e .
+
+    - name: Verify Dependencies Integrity (pip check)
+      run: python -m pip check
+
+    - name: Top-Level Module Import Smoke Test
+      run: |
+        python -c "import app.main; import hopzero.core; import hopzero.llm; import hopzero_registry; import hopzero_forensics"
 
     - name: Bytecode & Lint Compile Check
       run: |
@@ -58,6 +90,10 @@ jobs:
     - name: Full Pytest Test Suite
       run: |
         python -m pytest -q
+
+    - name: Launcher & Quickstart Smoke Test
+      run: |
+        python scripts/smoke_test.py
 
     - name: Offline Acceptance & Security Isolation Test
       run: |

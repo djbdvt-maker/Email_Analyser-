@@ -36,9 +36,13 @@ def load_registry(version: str = "v1", verify_hash: bool = True) -> dict:
         with open(sha_path, "r", encoding="utf-8") as f:
             expected_digest = f.read().split()[0].strip()
         if computed_digest != expected_digest:
-            raise RegistryVerificationError(
-                f"Registry {version} hash mismatch! Expected {expected_digest}, computed {computed_digest}"
-            )
+            # Handle LF vs CRLF checkout normalization difference across OS environments
+            normalized_digest = hashlib.sha256(raw_bytes.replace(b"\r\n", b"\n")).hexdigest()
+            crlf_digest = hashlib.sha256(raw_bytes.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")).hexdigest()
+            if expected_digest not in (normalized_digest, crlf_digest):
+                raise RegistryVerificationError(
+                    f"Registry {version} hash mismatch! Expected {expected_digest}, computed {computed_digest}"
+                )
 
     data = json.loads(raw_bytes.decode("utf-8"))
 

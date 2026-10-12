@@ -402,3 +402,30 @@ The following decisions are strictly locked across all work packages:
      - Added 9 unit tests in `03_BACKEND/tests/test_security_audit_remediation.py` covering SSRF blocks, path traversal sanitization, login rate limiting, role gating on audit logs and exports, and env secret resolution. All 9 passed.
      - Golden baseline matches 100% byte-for-byte (`scripts/check_golden.py`, 0 score drift).
 
+### DEC-020: v4.2.0 Quality, Security, and Packaging Hardening (Findings F1-F15)
+- **Date**: 2026-10-12
+- **Status**: ACCEPTED & IMPLEMENTED
+- **Context**: A comprehensive review of the v4.2.0 working copy identified 15 findings across dependencies, licensing cryptography, secrets hygiene, SSRF security, documentation claims, and packaging. All 15 findings required remediation while guaranteeing zero drift on the locked golden regression baseline.
+- **Decision**:
+  1. **Dependencies & Single Lockfile (F1)**: Unified `pyproject.toml` as single source of truth; pinned root `requirements.lock`; eliminated duplicate lockfiles; guarded optional extras (`playwright`, `laya`). Adopted Option A for YARA.
+  2. **Asymmetric Ed25519 Signing & Licensing (F2)**: Replaced HMAC with Ed25519 asymmetric cryptography. Embedded strictly public keys in open-source runtime; private keys remain strictly offline with maintainers via `tools/sign_release.py` and `tools/sign_license.py`.
+  3. **Packaging & Secrets Hygiene (F3)**: Removed compromised AbuseIPDB key; cleaned untracked directories, patches, and bulk test corpora. Implemented git-tracked release packaging in `scripts/package_release.py` with Ed25519 manifest signing, reducing release archive size from ~1GB to 5.47 MB.
+  4. **SSRF Hardening (F4)**: Comprehensive IP normalization and prohibition (`is_prohibited_ip`), pre-flight DNS validation, Playwright request routing interception on all hops/redirects, RBAC gating, and master toggle `sandbox_screenshot_enabled: bool = False`.
+  5. **Laya Pre-screening Safety (F5)**: Removed hardcoded latency claims; documented empirical benchmark in `docs/PRESCREEN_EVALUATION.md`; verified default `laya_prescreen_skip_ai_on_benign=False`.
+  6. **Line Ending Invariance (F6)**: Enforced LF across text files via `.editorconfig` and `.gitattributes`; created `scripts/check_crlf.py`.
+  7. **License & Claims Alignment (F7, F12)**: Unified Apache-2.0 license; eliminated absolute marketing badges; added "What HopZero Does Not Guarantee" in `README.md`; made qualification counts in `doctor.py` and `/api/v1/system/registry` dynamically loaded from registry truth.
+  8. **Insecure Defaults Refusal (F8)**: Refuse insecure JWT keys and placeholder deny-lists when `environment == "production"`.
+  9. **Matrix Documentation (F9)**: Explicit Python 3.12.x and OS support matrix documented in `README.md`.
+  10. **LLM Config Validation (F10)**: Populated `config/llm.yaml` with schema validation preventing model reload thrashing.
+  11. **CI Strengthening (F11)**: Added hygiene, `pip check`, and import smoke tests to CI workflows.
+  12. **Playwright Graceful Degradation (F13)**: Handled missing Chromium runtime with clean HTTP 503 and actionable hint in `doctor.py`.
+  13. **Single Version Source (F14)**: Pinned `4.2.0` in `hopzero.__version__`; eliminated redundant Dockerfiles and legacy docs.
+  14. **Experimental Isolation (F15)**: Marked `08_FINETUNING` with clear experimental banners and verified 0 runtime dependencies.
+- **Verification**:
+  - Full pytest test suite: 519 passed, 1 skipped.
+  - `python scripts/check_golden.py`: PASSED (100% byte-identical across 21 scoring cases and 14 EML fixtures).
+  - `python scripts/check_crlf.py`: PASS (all 378 tracked text files use LF).
+  - `python scripts/check_claims.py`: PASS.
+  - `python scripts/doctor.py`: PASSED.
+
+

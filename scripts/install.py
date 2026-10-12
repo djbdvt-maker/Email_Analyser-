@@ -66,7 +66,14 @@ def check_prerequisites(offline: bool = False) -> Dict[str, Any]:
     v = sys.version_info
     if not (v.major == 3 and v.minor == 12):
         prereqs["ok"] = False
-        prereqs["reasons"].append(f"Python 3.12 is required (detected {v.major}.{v.minor}.{v.micro})")
+        prereqs["reasons"].append(
+            f"Python 3.12.x is required (detected {v.major}.{v.minor}.{v.micro}).\n"
+            "    Provision Python 3.12 with:\n"
+            "      Windows: winget install Python.Python.3.12\n"
+            "      macOS:   brew install python@3.12\n"
+            "      Linux:   sudo apt install python3.12 python3.12-venv\n"
+            "      uv:      uv python install 3.12 && uv venv --python 3.12"
+        )
 
     # Disk space check
     app_data = get_app_data_root()

@@ -245,6 +245,7 @@ class AnalysisRunConfig:
     llm_prompt_version: str = "prompt-v1"
     llm_schema_version: str = "proposal-v1"
     extra_options: Dict[str, Any] = field(default_factory=dict)
+    optional_components: Dict[str, bool] = field(default_factory=dict)
 
     def compute_options_hash(self) -> str:
         """
@@ -300,6 +301,7 @@ class AnalysisRunConfig:
                 "schema_version": self.llm_schema_version,
             },
             "extra_options": self.extra_options,
+            "optional_components": self.optional_components,
             "reproducibility_fingerprint": self.compute_reproducibility_fingerprint(),
         }
 
@@ -322,4 +324,5 @@ class AnalysisRunConfig:
             llm_prompt_version=llm_data.get("prompt_version", data.get("llm_prompt_version", "prompt-v1")),
             llm_schema_version=llm_data.get("schema_version", data.get("llm_schema_version", "proposal-v1")),
             extra_options=data.get("extra_options", {}),
+            optional_components=data.get("optional_components", {}),
         )

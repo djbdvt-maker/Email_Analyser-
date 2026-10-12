@@ -37,6 +37,11 @@ REFUSAL_TRIGGERS: tuple[str, ...] = (
 )
 
 
+class LLMConfigValidationError(ValueError):
+    """Raised when LLM configuration fails schema validation."""
+    pass
+
+
 @dataclass
 class LLMConfig:
     """Unified configuration for the shared local LLM."""
@@ -46,8 +51,35 @@ class LLMConfig:
     temperature: float = 0.0
     seed: int = 42
     keep_alive: str = "5m"
-    timeout_seconds: float = 30.0
+    request_timeout_s: float = 30.0
+    max_concurrency: int = 4
     api_key: Optional[str] = None
+    timeout_seconds: Optional[float] = None
+
+    def __post_init__(self):
+        if self.timeout_seconds is not None:
+            self.request_timeout_s = self.timeout_seconds
+        else:
+            self.timeout_seconds = self.request_timeout_s
+
+    def validate(self) -> None:
+        """Validates configuration parameters against schema invariants."""
+        if not self.model or not isinstance(self.model, str) or not self.model.strip():
+            raise LLMConfigValidationError("LLM 'model' must be a non-empty string.")
+        if not self.base_url or not (self.base_url.startswith("http://") or self.base_url.startswith("https://")):
+            raise LLMConfigValidationError(f"Invalid 'base_url' '{self.base_url}'. Must start with http:// or https://")
+        if not isinstance(self.num_ctx, int) or self.num_ctx <= 0:
+            raise LLMConfigValidationError(f"Invalid 'num_ctx' {self.num_ctx}. Must be a positive integer.")
+        if not (0.0 <= self.temperature <= 2.0):
+            raise LLMConfigValidationError(f"Invalid 'temperature' {self.temperature}. Must be between 0.0 and 2.0.")
+        if self.seed < 0:
+            raise LLMConfigValidationError(f"Invalid 'seed' {self.seed}. Must be non-negative.")
+        if self.request_timeout_s <= 0:
+            raise LLMConfigValidationError(f"Invalid 'request_timeout_s' {self.request_timeout_s}. Must be positive.")
+        if self.max_concurrency < 1:
+            raise LLMConfigValidationError(f"Invalid 'max_concurrency' {self.max_concurrency}. Must be >= 1.")
+        if not str(self.keep_alive).strip():
+            raise LLMConfigValidationError("Invalid 'keep_alive'. Must be a non-empty string.")
 
     @classmethod
     def from_yaml(cls, path: Optional[Union[str, Path]] = None) -> LLMConfig:
@@ -59,30 +91,44 @@ class LLMConfig:
 
         data: Dict[str, Any] = {}
         if path and Path(path).exists():
-            with open(path, "r", encoding="utf-8") as f:
-                loaded = yaml.safe_load(f)
-                if isinstance(loaded, dict):
-                    data = loaded
+            try:
+                with open(path, "r", encoding="utf-8") as f:
+                    loaded = yaml.safe_load(f)
+                    if isinstance(loaded, dict):
+                        data = loaded
+            except Exception as e:
+                import logging
+                logging.getLogger("hopzero.llm").warning(f"Error reading YAML from {path}: {e}")
+
+        timeout_raw = (
+            os.environ.get("HOPZERO_LLM_TIMEOUT_SECONDS")
+            or data.get("request_timeout_s")
+            or data.get("timeout_seconds", 30.0)
+        )
 
         model = os.environ.get("HOPZERO_LLM_MODEL") or data.get("model", "hermes3:3b")
         base_url = os.environ.get("HOPZERO_LLM_BASE_URL") or data.get("base_url", "http://127.0.0.1:11434")
         num_ctx = int(os.environ.get("HOPZERO_LLM_NUM_CTX") or data.get("num_ctx", 4096))
         temperature = float(os.environ.get("HOPZERO_LLM_TEMPERATURE") or data.get("temperature", 0.0))
         seed = int(os.environ.get("HOPZERO_LLM_SEED") or data.get("seed", 42))
-        keep_alive = os.environ.get("HOPZERO_LLM_KEEP_ALIVE") or data.get("keep_alive", "5m")
-        timeout_seconds = float(os.environ.get("HOPZERO_LLM_TIMEOUT_SECONDS") or data.get("timeout_seconds", 30.0))
+        keep_alive = str(os.environ.get("HOPZERO_LLM_KEEP_ALIVE") or data.get("keep_alive", "5m"))
+        request_timeout_s = float(timeout_raw)
+        max_concurrency = int(os.environ.get("HOPZERO_LLM_MAX_CONCURRENCY") or data.get("max_concurrency", 4))
         api_key = os.environ.get("HOPZERO_LLM_API_KEY") or data.get("api_key")
 
-        return cls(
+        cfg = cls(
             model=model,
             base_url=base_url,
             num_ctx=num_ctx,
             temperature=temperature,
             seed=seed,
             keep_alive=keep_alive,
-            timeout_seconds=timeout_seconds,
+            request_timeout_s=request_timeout_s,
+            max_concurrency=max_concurrency,
             api_key=api_key,
         )
+        cfg.validate()
+        return cfg
 
 
 @dataclass

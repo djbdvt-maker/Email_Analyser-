@@ -13,7 +13,10 @@ import secrets
 import subprocess
 import sys
 from typing import Optional, Tuple
-from jose import jwt
+try:
+    import jwt
+except ImportError:
+    from jose import jwt
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Header, Request, Response, status, BackgroundTasks
 from sqlalchemy.orm import Session
 

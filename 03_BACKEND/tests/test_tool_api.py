@@ -16,6 +16,7 @@ import pytest
 
 from app.main import app
 from app.qualification_registry import REGISTRY_VERSION
+import hopzero
 from tests.conftest import auth_headers
 
 
@@ -31,7 +32,7 @@ def test_get_tool_manifest_contract(client):
 
     assert manifest["id"] == "hopzero-email-forensics"
     assert manifest["name"] == "HopZero Email Forensics"
-    assert manifest["version"] == "2.0.0"
+    assert manifest["version"] == hopzero.__version__
     assert manifest["category"] == "security_forensics"
     assert "email_parsing" in manifest["capabilities"]
     assert "hop0_attribution" in manifest["capabilities"]
@@ -55,7 +56,7 @@ def test_get_version_endpoint(client):
     assert resp.status_code == 200
     v = resp.json()
 
-    assert v["backend_version"] == "2.0.0"
+    assert v["backend_version"] == hopzero.__version__
     assert v["forensics_version"] == "1.0.0"
     assert v["registry_version"] == REGISTRY_VERSION
     assert v["registry_sha256"] == "1047f1db05dd6fe51d20e124d3e42e7d7a20e985993afddfc08759942ee2a44d"

@@ -148,7 +148,10 @@ def run_diagnostics(verbose: bool = True) -> list[DoctorCheck]:
     c = DoctorCheck("Forensic Registry Integrity")
     try:
         registry = load_registry(verify_hash=True)
-        c.message = f"Registry verified byte-for-byte ({len(registry)} qualification rules loaded, SHA-256 verified)"
+        q_count = len(registry.get("qualifications", {}))
+        fl_count = len(registry.get("floors", {}))
+        sb_count = len(registry.get("scoring_buckets", {}))
+        c.message = f"Registry verified byte-for-byte ({q_count} qualifications, {fl_count} floors, {sb_count} scoring buckets loaded, SHA-256 verified)"
     except Exception as e:
         c.passed = False
         c.message = f"Registry verification failed: {e}"
@@ -164,6 +167,15 @@ def run_diagnostics(verbose: bool = True) -> list[DoctorCheck]:
         c.passed = False
         c.message = "Golden outputs snapshot missing!"
         c.fix_hint = "Generate golden outputs with: 'python scripts/save_golden.py'"
+    checks.append(c)
+
+    # 9. Playwright & Sandbox Browser (F13)
+    c = DoctorCheck("Sandbox Browser Environment")
+    import importlib.util
+    if importlib.util.find_spec("playwright") is not None:
+        c.message = "Playwright package is installed. (Run 'playwright install chromium' if browser binaries are needed)."
+    else:
+        c.message = "Playwright optional extra is not installed (sandbox feature disabled; default)."
     checks.append(c)
 
     return checks

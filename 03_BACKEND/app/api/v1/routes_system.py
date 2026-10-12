@@ -69,3 +69,17 @@ def get_system_license():
     return active.to_dict()
 
 
+@router.get("/registry", summary="Get dynamic qualification registry statistics")
+def get_system_registry():
+    """Returns live dynamically derived counts from the compiled qualification registry (F12)."""
+    from hopzero.core.registry import load_registry
+    reg = load_registry(verify_hash=True)
+    return {
+        "version": reg.get("version", "v1"),
+        "sha256": reg.get("content_sha256"),
+        "qualifications_count": len(reg.get("qualifications", {})),
+        "floors_count": len(reg.get("floors", {})),
+        "scoring_buckets_count": len(reg.get("scoring_buckets", {})),
+    }
+
+

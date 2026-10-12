@@ -1,10 +1,11 @@
 # Auto-detect text files and enforce consistent LF line endings
 * text=auto eol=lf
 
-# Raw forensic emails must remain strictly binary to prevent CRLF line-ending drift
-# and guarantee byte-for-byte SHA-256 hash stability across Windows/Linux/macOS
+# Raw forensic emails and registry snapshots must remain strictly binary
+# to prevent CRLF line-ending drift and guarantee byte-for-byte SHA-256 hash stability
 *.eml binary
 *.msg binary
+01_REGISTRY/releases/* binary
 
 # Media, databases, and compiled binaries
 *.png binary
@@ -23,3 +24,8 @@
 *.woff binary
 *.woff2 binary
 *.ttf binary
+
+# Windows shell scripts require CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf

@@ -2,12 +2,12 @@
 Laya Pre-Screen Service.
 ========================
 
-Fast (~35ms) non-autoregressive pre-screening layer that runs AFTER the 7
-deterministic forensic analyzers and BEFORE the expensive LLM-based AI Reasoner.
+Optional non-autoregressive pre-screening layer that runs AFTER the 7
+deterministic forensic analyzers and BEFORE the LLM-based AI Reasoner.
 
 Uses the laya library's Router to produce typed decisions:
 - threat_category (choice): phishing, BEC, malware, spam, or benign
-- urgency (score): 0..2 rubric → routine / soon / critical
+- urgency (score): 0..2 rubric -> routine / soon / critical
 - social_engineering (noul): binary yes/no
 - financial_request (noul): binary yes/no
 - credential_harvesting (noul): binary yes/no
@@ -18,7 +18,7 @@ Architectural invariants:
   produced_by="laya_prescreen" but NEVER create Findings, modify the
   numeric score, alter severity, or influence floor evaluation.
 - When Laya classifies an email as "benign" with high confidence, the
-  pipeline MAY skip the expensive LLM AI Reasoner call (configurable).
+  pipeline MAY skip the LLM AI Reasoner call only when explicitly enabled.
 - Full fault tolerance: if Laya fails for any reason, the pipeline
   proceeds unchanged (same pattern as the AI Reasoner fallback).
 """
@@ -40,8 +40,8 @@ _router_init_attempted = False
 
 def _get_router():
     """
-    Lazy-initialize the laya Router singleton.  Preloads checkpoints on
-    first call so subsequent predict() calls hit sub-35ms latency.
+    Lazy-initialize the laya Router singleton. Preloads checkpoints on
+    first call. Runtime latency is measured and recorded dynamically per-request.
     """
     global _router, _router_init_attempted
     if _router is not None:

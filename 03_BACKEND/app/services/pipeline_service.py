@@ -93,6 +93,13 @@ def execute_analysis_pipeline(
         from app.services.ai_reasoner_service import resolve_llm_reproducibility
         from hopzero.core.models import AnalysisRunConfig
         repro = resolve_llm_reproducibility(get_settings())
+        import importlib.util
+        opt_components = {
+            "yara": importlib.util.find_spec("yara") is not None,
+            "sandbox": importlib.util.find_spec("playwright") is not None,
+            "laya": importlib.util.find_spec("laya") is not None,
+            "postgres": importlib.util.find_spec("psycopg2") is not None,
+        }
         if not run.config or not run.config.get("llm"):
             existing_cfg = dict(run.config or {})
             cfg = AnalysisRunConfig(
@@ -104,6 +111,7 @@ def execute_analysis_pipeline(
                 llm_prompt_version=repro["prompt_version"],
                 llm_schema_version=repro["schema_version"],
                 extra_options=existing_cfg.get("extra_options", {}),
+                optional_components=opt_components,
             )
             run.config = cfg.to_dict()
             db.add(run)
@@ -261,6 +269,16 @@ def execute_analysis_pipeline(
                     supporting_text=f"YARA Engine detected malicious signature: {m.rule}",
                     produced_by="yara_engine"
                 ))
+        except ImportError:
+            yara_fact = FactModel(
+                investigation_id=inv.id,
+                analysis_run_id=run.id,
+                fact_type="signal_unavailable",
+                payload={"signal": "yara_engine", "reason": "yara-python not installed"},
+                produced_by="yara_engine",
+            )
+            db.add(yara_fact)
+            db.flush()
         except Exception as e:
             logger.error(f"YARA Engine failed: {e}")
 
@@ -402,9 +420,9 @@ def execute_analysis_pipeline(
                 )
                 persist_finding(db, user=user, investigation_id=inv.id, payload=finding_payload)
 
-        # 6a. Laya Pre-Screen — fast (~35ms) typed decision pre-screening
+        # 6a. Laya Pre-Screen — optional advisory typed decision pre-screening
         #     Advisory signals only: persisted as Facts, never as Findings.
-        #     When benign + high confidence → optionally skip the expensive LLM call.
+        #     When benign + high confidence and explicitly configured -> optionally skip LLM.
         settings = get_settings()
         laya_prescreen_result = None
 

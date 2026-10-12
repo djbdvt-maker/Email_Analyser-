@@ -6,10 +6,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-COPY 03_BACKEND/requirements.txt ./03_BACKEND/
-RUN pip install --no-cache-dir -r ./03_BACKEND/requirements.txt
-RUN playwright install --with-deps chromium
-RUN pip install --no-cache-dir requests
+COPY requirements.lock ./
+RUN pip install --no-cache-dir -r requirements.lock
+RUN pip install --no-cache-dir "playwright>=1.47.0" && playwright install --with-deps chromium
 
 COPY 03_BACKEND/ ./03_BACKEND/
 COPY 02_FORENSICS/ ./02_FORENSICS/

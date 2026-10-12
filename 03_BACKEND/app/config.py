@@ -40,8 +40,13 @@ class Settings(BaseSettings):
     # Laya Pre-Screen Configuration
     laya_prescreen_enabled: bool = False  # Master toggle for the Laya pre-screening layer
     laya_prescreen_model: str | None = None  # Override: "english", "multilingual", "typed-decisions", or None for auto-routing
-    laya_prescreen_skip_ai_on_benign: bool = True  # Skip expensive LLM call when Laya classifies as benign with high confidence
+    laya_prescreen_skip_ai_on_benign: bool = False  # Safe by default: false to avoid skipping LLM on semantic threats (F5)
     laya_prescreen_benign_confidence_threshold: float = 0.75  # Minimum confidence to trust a benign classification for AI skip
+
+    # Sandbox Screenshot Configuration (SSRF Hardened, F4)
+    sandbox_screenshot_enabled: bool = False  # Off by default in Lite/Standard (requires explicit setting)
+    sandbox_timeout_seconds: float = 10.0
+    sandbox_max_redirects: int = 5
 
     # Parser Isolation Configuration
     parser_isolation_mode: str = "subprocess"  # "subprocess" | "process_pool" | "in_process"
@@ -51,7 +56,26 @@ class Settings(BaseSettings):
     environment: str = "development"
 
 
+import logging
+import secrets
 from pathlib import Path
+
+logger = logging.getLogger("hopzero.config")
+
+INSECURE_SECRET_PLACEHOLDERS = {
+    "change-me-in-production",
+    "secret",
+    "password",
+    "default",
+    "changeme",
+    "admin",
+    "12345678",
+    "demo",
+    "test",
+    "sih-extension-demo-key",
+    "dev-secret",
+    "supersecret",
+}
 
 
 class ConfigurationError(RuntimeError):
@@ -78,13 +102,41 @@ def validate_settings(settings: Settings) -> None:
             "Set DATABASE_URL to a valid SQLite ('sqlite:///./storage/hopzero.db') or PostgreSQL URI ('postgresql+psycopg2://user:pass@localhost:5432/hopzero')."
         )
 
-    # 2. Production JWT secret validation
+    # 2. Production secrets & insecure defaults validation (F8)
     if settings.environment.lower() == "production":
-        insecure_keys = ("change-me-in-production", "secret", "password", "default", "")
-        if not settings.jwt_secret_key or settings.jwt_secret_key.strip().lower() in insecure_keys:
+        jwt_key = settings.jwt_secret_key.strip() if settings.jwt_secret_key else ""
+        if not jwt_key or jwt_key.lower() in INSECURE_SECRET_PLACEHOLDERS:
             raise ConfigurationError(
                 "Insecure default or empty JWT_SECRET_KEY in production mode.",
-                "Generate a cryptographically secure key with: python -c \"import secrets; print(secrets.token_urlsafe(32))\""
+                'Generate a cryptographically secure key with: python -c "import secrets; print(secrets.token_urlsafe(32))"'
+            )
+        if len(jwt_key) < 32:
+            raise ConfigurationError(
+                f"JWT_SECRET_KEY in production mode must be at least 32 characters (got {len(jwt_key)}).",
+                'Generate a cryptographically secure key with: python -c "import secrets; print(secrets.token_urlsafe(32))"'
+            )
+
+        # Deny placeholder API and service keys in production
+        for key_name, val in [
+            ("HOPZERO_API_KEY", settings.hopzero_api_key),
+            ("HOPZERO_INTERNAL_SERVICE_KEY", settings.hopzero_internal_service_key),
+            ("HOPZERO_N8N_INGEST_KEY", settings.hopzero_n8n_ingest_key),
+        ]:
+            if val and val.strip().lower() in INSECURE_SECRET_PLACEHOLDERS:
+                raise ConfigurationError(
+                    f"Insecure placeholder value detected for {key_name} in production mode: '{val}'.",
+                    f"Set a strong, unique secret key for {key_name} or leave it unset."
+                )
+    else:
+        # Development / test mode warning
+        jwt_key = settings.jwt_secret_key.strip() if settings.jwt_secret_key else ""
+        if not jwt_key:
+            settings.jwt_secret_key = secrets.token_urlsafe(32)
+            logger.warning("[SECURITY WARNING] No JWT_SECRET_KEY provided in development; generated ephemeral key.")
+        elif jwt_key.lower() in INSECURE_SECRET_PLACEHOLDERS:
+            logger.warning(
+                "[SECURITY WARNING] Using default/insecure JWT_SECRET_KEY in development mode. "
+                "In production, startup will fail unless a strong key (>= 32 chars) is set."
             )
 
     # 3. Parser isolation mode validation

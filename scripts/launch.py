@@ -85,6 +85,17 @@ def main():
     print("                     HOPZERO ONE-CLICK LAUNCHER                       ")
     print("=" * 76)
 
+    # Python version check
+    v = sys.version_info
+    if not (v.major == 3 and v.minor == 12):
+        print(f"[!] Warning: Detected Python {v.major}.{v.minor}.{v.micro}.")
+        print("    HopZero is certified on Python 3.12.x for binary wheel stability.")
+        print("    To provision Python 3.12:")
+        print("      Windows: winget install Python.Python.3.12")
+        print("      macOS:   brew install python@3.12")
+        print("      Linux:   sudo apt install python3.12 python3.12-venv")
+        print("      uv:      uv python install 3.12 && uv venv --python 3.12\n")
+
     # 1. Doctor check if requested
     if args.doctor:
         from scripts.doctor import run_diagnostics, print_doctor_report
