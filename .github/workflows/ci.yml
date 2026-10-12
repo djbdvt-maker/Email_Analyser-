@@ -110,7 +110,17 @@ jobs:
         echo '```' >> $GITHUB_STEP_SUMMARY
         tail -n 60 pytest_output.log >> $GITHUB_STEP_SUMMARY
         echo '```' >> $GITHUB_STEP_SUMMARY
+        python -c "
+        import os
+        if os.path.exists('pytest_output.log'):
+            with open('pytest_output.log', 'r', encoding='utf-8', errors='replace') as f:
+                lines = [l.strip() for l in f.readlines() if l.strip()]
+            for l in lines[-25:]:
+                sanitized = l.replace('%', '%25').replace('\r', '').replace('\n', '%0A')
+                print(f'::error title=PytestTrace::{sanitized}')
+        "
       shell: bash
+
 
 
     - name: Launcher & Quickstart Smoke Test
