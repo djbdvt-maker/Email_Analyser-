@@ -69,9 +69,14 @@ jobs:
     - name: Verify Dependencies Integrity (pip check)
       run: python -m pip check
 
+    - name: Set PYTHONPATH for Multi-Package Layout
+      run: |
+        echo "PYTHONPATH=.${{ runner.os == 'Windows' && ';' || ':' }}01_REGISTRY${{ runner.os == 'Windows' && ';' || ':' }}02_FORENSICS${{ runner.os == 'Windows' && ';' || ':' }}03_BACKEND" >> $GITHUB_ENV
+      shell: bash
+
     - name: Top-Level Module Import Smoke Test
       run: |
-        python -c "import app.main; import hopzero.core; import hopzero.llm; import hopzero_registry; import hopzero_forensics"
+        python -c "import sys; sys.path.extend(['.', '01_REGISTRY', '02_FORENSICS', '03_BACKEND']); import app.main; import hopzero.core; import hopzero.llm; import hopzero_registry; import hopzero_forensics; print('[OK] All modules imported successfully')"
 
     - name: Bytecode & Lint Compile Check
       run: |
