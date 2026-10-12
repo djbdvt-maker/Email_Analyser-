@@ -100,7 +100,7 @@ jobs:
     - name: Full Pytest Test Suite
       id: pytest
       run: |
-        python -m pytest --tb=short 2>&1 | tee pytest_output.log
+        python -m pytest --tb=short > pytest_output.log 2>&1
       shell: bash
 
     - name: Publish Pytest Diagnostic Summary
@@ -115,11 +115,13 @@ jobs:
         if os.path.exists('pytest_output.log'):
             with open('pytest_output.log', 'r', encoding='utf-8', errors='replace') as f:
                 lines = [l.strip() for l in f.readlines() if l.strip()]
-            for l in lines[-25:]:
+            summary_lines = [l for l in lines if any(k in l for k in ['FAIL', 'ERROR', 'passed', '===', 'short test summary'])]
+            for l in summary_lines[-25:]:
                 sanitized = l.replace('%', '%25').replace('\r', '').replace('\n', '%0A')
-                print(f'::error title=PytestTrace::{sanitized}')
+                print(f'::error title=Pytest::{sanitized}')
         "
       shell: bash
+
 
 
 
