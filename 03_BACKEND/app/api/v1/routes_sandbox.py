@@ -216,20 +216,21 @@ async def get_sandbox_screenshot(
             detail="Insufficient permissions: sandbox screenshot feature is restricted to ANALYST and ADMIN roles.",
         )
 
-    # 3. Runtime Extra Check
-    if not PLAYWRIGHT_AVAILABLE or async_playwright is None:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Sandbox screenshot feature is unavailable because the optional 'playwright' package is not installed. Install with: pip install hopzero[sandbox]",
-        )
-
-    # 4. Settings check (feature toggle off by default)
+    # 3. Settings check (feature toggle off by default)
     settings = get_settings()
     if not getattr(settings, "sandbox_screenshot_enabled", False):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Sandbox screenshot feature is disabled. Set SANDBOX_SCREENSHOT_ENABLED=1 to enable.",
         )
+
+    # 4. Runtime Extra Check
+    if not PLAYWRIGHT_AVAILABLE or async_playwright is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Sandbox screenshot feature is unavailable because the optional 'playwright' package is not installed. Install with: pip install hopzero[sandbox]",
+        )
+
 
     async with _SANDBOX_SEMAPHORE:
         try:

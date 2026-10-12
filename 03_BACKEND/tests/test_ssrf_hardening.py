@@ -3,6 +3,7 @@
 Comprehensive test suite verifying SSRF defenses, IP representation normalization,
 DNS resolution validation, route interception, and RBAC on the sandbox screenshot feature (F4).
 """
+import ipaddress
 import pytest
 from unittest.mock import patch
 from fastapi import HTTPException
@@ -30,9 +31,10 @@ def test_ip_representation_parsing():
     # IPv6 loopback
     assert str(parse_ip_literal("[::1]")) == "::1"
     # IPv4-mapped IPv6
-    assert str(parse_ip_literal("[::ffff:127.0.0.1]")) == "::ffff:7f00:1"
+    assert parse_ip_literal("[::ffff:127.0.0.1]") == ipaddress.ip_address("::ffff:127.0.0.1")
     # Regular domain name returns None
     assert parse_ip_literal("example.com") is None
+
 
 
 def test_prohibited_ip_rejection():
