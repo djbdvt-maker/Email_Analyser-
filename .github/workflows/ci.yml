@@ -69,9 +69,14 @@ jobs:
     - name: Verify Dependencies Integrity (pip check)
       run: python -m pip check
 
-    - name: Set PYTHONPATH for Multi-Package Layout
-      run: |
-        echo "PYTHONPATH=.${{ runner.os == 'Windows' && ';' || ':' }}01_REGISTRY${{ runner.os == 'Windows' && ';' || ':' }}02_FORENSICS${{ runner.os == 'Windows' && ';' || ':' }}03_BACKEND" >> $GITHUB_ENV
+    - name: Set PYTHONPATH (Unix)
+      if: runner.os != 'Windows'
+      run: echo "PYTHONPATH=.:01_REGISTRY:02_FORENSICS:03_BACKEND" >> $GITHUB_ENV
+      shell: bash
+
+    - name: Set PYTHONPATH (Windows)
+      if: runner.os == 'Windows'
+      run: echo "PYTHONPATH=.;01_REGISTRY;02_FORENSICS;03_BACKEND" >> $GITHUB_ENV
       shell: bash
 
     - name: Top-Level Module Import Smoke Test
@@ -94,7 +99,8 @@ jobs:
 
     - name: Full Pytest Test Suite
       run: |
-        python -m pytest -q
+        python -m pytest
+
 
     - name: Launcher & Quickstart Smoke Test
       run: |
