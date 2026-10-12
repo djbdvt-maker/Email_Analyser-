@@ -98,8 +98,19 @@ jobs:
         python scripts/check_golden.py
 
     - name: Full Pytest Test Suite
+      id: pytest
       run: |
-        python -m pytest
+        python -m pytest --tb=short 2>&1 | tee pytest_output.log
+      shell: bash
+
+    - name: Publish Pytest Diagnostic Summary
+      if: always()
+      run: |
+        echo "### Pytest Run Summary (${{ runner.os }})" >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+        tail -n 60 pytest_output.log >> $GITHUB_STEP_SUMMARY
+        echo '```' >> $GITHUB_STEP_SUMMARY
+      shell: bash
 
 
     - name: Launcher & Quickstart Smoke Test
