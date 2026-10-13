@@ -35,10 +35,21 @@ def get_or_download_cloudflared() -> Optional[Path]:
     if local_bin.exists():
         return local_bin
 
-    # 2. Portable download for Windows
+    # 2. Portable download for Windows, Linux, and macOS
+    url = None
+    import platform
+    machine = platform.machine().lower()
+    is_arm = "arm" in machine or "aarch64" in machine
+
     if sys.platform == "win32":
         url = "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-windows-amd64.exe"
-        print(f"[*] Downloading portable cloudflared binary for remote multi-network access...")
+    elif sys.platform.startswith("linux"):
+        url = f"https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-{'arm64' if is_arm else 'amd64'}"
+    elif sys.platform == "darwin":
+        url = f"https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-darwin-{'arm64' if is_arm else 'amd64'}"
+
+    if url:
+        print(f"[*] Downloading portable cloudflared binary for remote multi-network access ({sys.platform})...")
         print(f"    Source: {url}")
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "HopZero-Launcher/1.0"})
@@ -55,6 +66,9 @@ def get_or_download_cloudflared() -> Optional[Path]:
                     if total > 0:
                         percent = (downloaded / total) * 100
                         print(f"\r    Downloading: {percent:.1f}% ({downloaded // (1024*1024)}MB / {total // (1024*1024)}MB)", end="", flush=True)
+            if sys.platform != "win32":
+                import stat
+                local_bin.chmod(local_bin.stat().st_mode | stat.S_IEXEC | stat.S_IXGRP | stat.S_IXOTH)
             print("\n    [OK] cloudflared downloaded successfully.")
             return local_bin
         except Exception as e:
