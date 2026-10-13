@@ -19,6 +19,8 @@ from app.api.v1 import (
     routes_tool,
     routes_action_drafts,
     routes_system,
+    routes_admin_employees,
+    routes_employee_portal,
 )
 from hopzero.tools.domain import domain_tool_router
 from fastapi.middleware.cors import CORSMiddleware
@@ -70,6 +72,8 @@ from app.config import get_settings
 
 _settings = get_settings()
 _cors_origins = [o.strip() for o in _settings.cors_origins.split(",") if o.strip()]
+if _settings.public_url and _settings.public_url.strip():
+    _cors_origins.append(_settings.public_url.strip().rstrip("/"))
 
 app.add_middleware(
     CORSMiddleware,
@@ -79,6 +83,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()"
+    response.headers["X-Permitted-Cross-Domain-Policies"] = "none"
+    if request.url.path.startswith("/api/"):
+        response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+    return response
 
 app.include_router(routes_auth.router)
 app.include_router(routes_investigations.router)
@@ -94,6 +112,8 @@ app.include_router(routes_enforcement.router)
 app.include_router(routes_tool.router)
 app.include_router(routes_action_drafts.router)
 app.include_router(routes_system.router, prefix="/api/v1")
+app.include_router(routes_admin_employees.router)
+app.include_router(routes_employee_portal.router)
 app.include_router(domain_tool_router)
 app.include_router(websockets.router, prefix="/api/v1")
 
@@ -128,4 +148,24 @@ async def global_exception_handler(request: Request, exc: Exception):
     if settings.environment == "development":
         return JSONResponse(status_code=500, content={'detail': tb})
     return JSONResponse(status_code=500, content={'detail': 'Internal Server Error'})
+
+
+# Static frontend mount (if built)
+from pathlib import Path
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+
+_frontend_dist = Path(__file__).resolve().parent.parent.parent / "04_FRONTEND" / "dist"
+if _frontend_dist.exists() and (_frontend_dist / "index.html").exists():
+    if (_frontend_dist / "assets").exists():
+        app.mount("/assets", StaticFiles(directory=str(_frontend_dist / "assets")), name="frontend_assets")
+
+    @app.get("/", include_in_schema=False)
+    async def serve_spa_root():
+        return FileResponse(_frontend_dist / "index.html")
+
+    @app.get("/portal", include_in_schema=False)
+    @app.get("/portal/{rest:path}", include_in_schema=False)
+    async def serve_spa_portal(rest: str = ""):
+        return FileResponse(_frontend_dist / "index.html")
 

@@ -20,6 +20,61 @@ class HopZeroClient {
     return this.token;
   }
 
+  async loginWithSecretCode(code, baseUrl) {
+    this.baseUrl = baseUrl || this.baseUrl;
+    const res = await fetch(`${this.baseUrl}/api/v1/portal/verify-code`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: code.trim().toUpperCase() })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `Secret code verification failed (${res.status})`);
+    }
+    const data = await res.json();
+    this.token = data.access_token;
+    return data;
+  }
+
+  async scanAsEmployee(emailData) {
+    const formData = new FormData();
+    if (emailData.raw_eml) {
+      formData.append("file", new Blob([emailData.raw_eml], { type: "message/rfc822" }), "scanned_email.eml");
+    } else if (emailData.subject || emailData.body) {
+      const simulatedEml = `Subject: ${emailData.subject || 'Unknown'}\nFrom: ${emailData.sender || 'Unknown'}\n\n${emailData.body || ''}`;
+      formData.append("raw_content", simulatedEml);
+    } else {
+      throw new Error("No email content could be extracted.");
+    }
+    if (emailData.subject) {
+      formData.append("email_subject", emailData.subject);
+    }
+
+    const res = await fetch(`${this.baseUrl}/api/v1/portal/scan`, {
+      method: "POST",
+      headers: this.getHeaders(),
+      body: formData
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `Scan failed: ${res.status}`);
+    }
+    return await res.json();
+  }
+
+  async reportToSoc(investigationId, notes) {
+    const res = await fetch(`${this.baseUrl}/api/v1/portal/report`, {
+      method: "POST",
+      headers: { ...this.getHeaders(), "Content-Type": "application/json" },
+      body: JSON.stringify({ investigation_id: investigationId, employee_notes: notes || "Flagged via Browser Extension" })
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.message || `Report failed: ${res.status}`);
+    }
+    return await res.json();
+  }
+
   getHeaders() {
     return { "Authorization": `Bearer ${this.token}` };
   }

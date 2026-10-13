@@ -28,8 +28,16 @@ import { LiveAnalysisScreen } from './components/LiveAnalysisScreen';
 import { Level3TechnicalEvidence } from './components/ProgressiveDisclosure/Level3TechnicalEvidence';
 import { Level4FindingsTable } from './components/ProgressiveDisclosure/Level4FindingsTable';
 import { Level5AuditAndExport } from './components/ProgressiveDisclosure/Level5AuditAndExport';
+import { EmployeeManagementModal } from './components/EmployeeManagementModal';
+import { EmployeePortal } from './components/EmployeePortal';
 
 export const App: React.FC = () => {
+  const [viewMode, setViewMode] = useState<'admin' | 'portal'>(() => {
+    return window.location.pathname.startsWith('/portal') || window.location.search.includes('portal=true') || window.location.search.includes('code=')
+      ? 'portal'
+      : 'admin';
+  });
+  const [showEmployeeModal, setShowEmployeeModal] = useState(false);
   const [investigations, setInvestigations] = useState<InvestigationSummary[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detail, setDetail] = useState<InvestigationDetail | null>(null);
@@ -48,8 +56,10 @@ export const App: React.FC = () => {
     
     // WebSocket for Real-Time Updates
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    // Use localhost:8000 since Vite proxies API to 8000, but ws might need direct url if not proxied
-    const ws = new WebSocket(`${protocol}//localhost:8000/api/v1/ws`);
+    const host = window.location.port === '5173' ? 'localhost:8000' : window.location.host;
+    const token = localStorage.getItem('token');
+    const wsUrl = `${protocol}//${host}/api/v1/ws${token ? `?token=${encodeURIComponent(token)}` : ''}`;
+    const ws = new WebSocket(wsUrl);
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
@@ -212,6 +222,17 @@ const userRole = React.useMemo(() => {
     }
   }, [investigations]); // update if they log in/out
 
+  if (viewMode === 'portal') {
+    return (
+      <EmployeePortal
+        onBackToAdmin={() => {
+          setViewMode('admin');
+          window.history.pushState({}, '', '/');
+        }}
+      />
+    );
+  }
+
   return (
     <div className="app-container">
       <Navbar
@@ -219,6 +240,11 @@ const userRole = React.useMemo(() => {
         onUploadClick={() => setShowUpload(true)}
         onHomeClick={() => setSelectedId(null)}
         onGuideClick={() => setShowWizard(true)}
+        onEmployeesClick={() => setShowEmployeeModal(true)}
+        onPortalClick={() => {
+          setViewMode('portal');
+          window.history.pushState({}, '', '/portal');
+        }}
       />
 
       <main className="main-content">
@@ -396,6 +422,10 @@ const userRole = React.useMemo(() => {
         onClose={() => setShowWizard(false)}
         onOpenUpload={() => setShowUpload(true)}
       />
+
+      {showEmployeeModal && (
+        <EmployeeManagementModal onClose={() => setShowEmployeeModal(false)} />
+      )}
     </div>
   );
 };

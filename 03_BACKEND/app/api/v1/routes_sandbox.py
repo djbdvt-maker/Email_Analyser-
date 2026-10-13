@@ -187,7 +187,7 @@ def _validate_safe_sandbox_url(raw_url: str) -> str:
         )
 
     for _, _, _, _, sockaddr in addr_infos:
-        resolved_ip_str = sockaddr[0]
+        resolved_ip_str = str(sockaddr[0])
         resolved_ip = parse_ip_literal(resolved_ip_str)
         if resolved_ip:
             blocked, reason = is_prohibited_ip(resolved_ip)
@@ -261,9 +261,9 @@ async def get_sandbox_screenshot(
                 # Log AuditEvent
                 record_audit_event(
                     db,
-                    organization_id=user.organization_id,
+                    organization_id=str(user.organization_id),
                     action=AuditAction.SANDBOX_SCREENSHOT_CAPTURED,
-                    actor_user_id=user.id,
+                    actor_user_id=str(user.id),
                     metadata={"url": safe_url},
                 )
                 db.commit()

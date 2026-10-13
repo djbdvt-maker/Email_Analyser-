@@ -45,6 +45,7 @@ class InvestigationOut(BaseModel):
     severity: Optional[str] = None
     verdict: Optional[str] = None
     current_run_status: Optional[str] = None
+    reported_by_employee: Optional[str] = None
 
 
 class AnalysisResponse(BaseModel):
@@ -411,4 +412,65 @@ class ActionDraftOut(BaseModel):
     execution_result: Optional[dict] = None
     created_at: datetime
     updated_at: datetime
+
+
+# ---------------------------------------------------- employee portal / codes ---
+
+class EmployeeCodeCreate(BaseModel):
+    employee_email: str = Field(min_length=3, max_length=255)
+    employee_name: Optional[str] = Field(None, max_length=255)
+    department: Optional[str] = Field(None, max_length=255)
+    send_email: bool = True
+
+
+class EmployeeCodeOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: str
+    organization_id: str
+    code: str
+    employee_email: str
+    employee_name: Optional[str] = None
+    department: Optional[str] = None
+    is_active: bool
+    scan_count: int
+    report_count: int
+    last_used_at: Optional[datetime] = None
+    invitation_sent_at: Optional[datetime] = None
+    created_at: datetime
+    invitation_status: Optional[str] = None
+
+
+class EmployeeCodeVerify(BaseModel):
+    code: str = Field(min_length=4, max_length=32)
+
+
+class EmployeeTokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    employee_email: str
+    employee_name: Optional[str] = None
+    department: Optional[str] = None
+    organization_name: str
+    code: str
+
+
+class EmployeeScanResponse(BaseModel):
+    investigation_id: str
+    analysis_run_id: str
+    verdict: str  # SAFE, SUSPICIOUS, DANGEROUS
+    severity: str
+    score: int
+    confidence: str
+    one_line_explanation: str
+    why_explanation: str
+    action_recommendation: str
+    subject: str
+    sender: str
+    has_threats: bool
+    is_reported: bool = False
+
+
+class EmployeeReportRequest(BaseModel):
+    investigation_id: str
+    employee_notes: Optional[str] = None
 

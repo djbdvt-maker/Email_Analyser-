@@ -81,3 +81,15 @@ filterwarnings = [
 ]
 addopts = "-v --tb=short"
 
+[tool.pyright]
+venvPath = "."
+venv = ".venv"
+
+extraPaths = [
+    ".",
+    "01_REGISTRY",
+    "02_FORENSICS",
+    "03_BACKEND",
+    "scripts"
+]
+

@@ -5,7 +5,13 @@ REM ============================================================================
 setlocal enabledelayedexpansion
 
 cd /d "%~dp0"
-python scripts\launch.py %*
+if exist ".venv\Scripts\python.exe" (
+    set "PYTHON_EXE=.venv\Scripts\python.exe"
+) else (
+    set "PYTHON_EXE=python"
+)
+
+%PYTHON_EXE% scripts\launch.py %*
 if %ERRORLEVEL% NEQ 0 (
     echo.
     echo [!] HopZero exited with error code %ERRORLEVEL%

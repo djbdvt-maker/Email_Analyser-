@@ -13,6 +13,9 @@ import {
   EnforcementActionRecord,
   EnforcementType,
   FeedbackType,
+  EmployeeCodeItem,
+  EmployeeTokenResponse,
+  EmployeeScanResult,
 } from '../../contract';
 
 const API_BASE = '/api/v1';
@@ -60,6 +63,7 @@ export async function fetchInvestigationSummaries(): Promise<InvestigationSummar
   const data = await res.json();
   return data.map((inv: any) => ({
     investigationId: inv.id,
+    title: inv.title,
     createdAt: inv.created_at,
     status: inv.status,
     currentRunStatus: inv.current_run_status as AnalysisRunStatus,
@@ -67,6 +71,7 @@ export async function fetchInvestigationSummaries(): Promise<InvestigationSummar
     severity: inv.severity ?? null,
     verdict: inv.verdict ?? null,
     lastAnalysisAt: inv.updated_at,
+    reportedByEmployee: inv.reported_by_employee ?? null,
   }));
 }
 
@@ -659,4 +664,100 @@ export async function loginUser(username: string, password: string):Promise<any>
   const data = await res.json();
   localStorage.setItem('token', data.access_token);
   return data;
+}
+
+// ============================================================
+// Employee Portal & Secret Code Admin APIs
+// ============================================================
+
+export async function fetchEmployeeCodes(): Promise<EmployeeCodeItem[]> {
+  const res = await apiFetch(`${API_BASE}/admin/employees`);
+  if (!res.ok) throw new Error(`Failed to fetch employee codes: ${res.status}`);
+  return await res.json();
+}
+
+export async function generateEmployeeCode(payload: {
+  employee_email: string;
+  employee_name?: string;
+  department?: string;
+  send_email?: boolean;
+}): Promise<EmployeeCodeItem> {
+  const res = await apiFetch(`${API_BASE}/admin/employees/generate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `Failed to generate code: ${res.status}`);
+  }
+  return await res.json();
+}
+
+export async function resendEmployeeInvitation(codeId: string): Promise<EmployeeCodeItem> {
+  const res = await apiFetch(`${API_BASE}/admin/employees/${codeId}/resend`, { method: 'POST' });
+  if (!res.ok) throw new Error('Failed to resend invitation email');
+  return await res.json();
+}
+
+export async function revokeEmployeeCode(codeId: string): Promise<void> {
+  const res = await apiFetch(`${API_BASE}/admin/employees/${codeId}`, { method: 'DELETE' });
+  if (!res.ok) throw new Error('Failed to revoke employee code');
+}
+
+export async function verifyEmployeeSecretCode(code: string): Promise<EmployeeTokenResponse> {
+  const res = await window.fetch(`${API_BASE}/portal/verify-code`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ code: code.trim().toUpperCase() }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Invalid or inactive secret code');
+  }
+  const data = await res.json();
+  localStorage.setItem('employee_token', data.access_token);
+  localStorage.setItem('employee_profile', JSON.stringify(data));
+  return data;
+}
+
+export async function scanEmailAsEmployee(file?: File, rawContent?: string, subject?: string): Promise<EmployeeScanResult> {
+  const token = localStorage.getItem('employee_token');
+  const formData = new FormData();
+  if (file) {
+    formData.append('file', file);
+  } else if (rawContent) {
+    formData.append('raw_content', rawContent);
+  }
+  if (subject) {
+    formData.append('email_subject', subject);
+  }
+
+  const res = await window.fetch(`${API_BASE}/portal/scan`, {
+    method: 'POST',
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+    body: formData,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `Scan failed: ${res.status}`);
+  }
+  return await res.json();
+}
+
+export async function reportThreatToSoc(investigationId: string, notes?: string): Promise<{ status: string; message: string }> {
+  const token = localStorage.getItem('employee_token');
+  const res = await window.fetch(`${API_BASE}/portal/report`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify({ investigation_id: investigationId, employee_notes: notes }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || 'Failed to report threat to SOC');
+  }
+  return await res.json();
 }

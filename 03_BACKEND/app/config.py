@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./storage/hopzero.db"
     test_database_url: str = "sqlite:///./test.db"
 
-    jwt_secret_key: str = "change-me-in-production"
+    jwt_secret_key: str = "change-me-in-production-hopzero-secure-dev-key-32chars"
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 60
 
@@ -53,6 +53,7 @@ class Settings(BaseSettings):
     parser_timeout_seconds: float = 15.0
 
     cors_origins: str = "http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000"
+    public_url: str | None = None
     environment: str = "development"
 
 
@@ -64,6 +65,7 @@ logger = logging.getLogger("hopzero.config")
 
 INSECURE_SECRET_PLACEHOLDERS = {
     "change-me-in-production",
+    "change-me-in-production-hopzero-secure-dev-key-32chars",
     "secret",
     "password",
     "default",

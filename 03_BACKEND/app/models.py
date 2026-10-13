@@ -43,6 +43,7 @@ class UserRole(str, enum.Enum):
     ANALYST = "ANALYST"
     VIEWER = "VIEWER"
     USER = "USER"
+    EMPLOYEE = "EMPLOYEE"
 
 
 class InvestigationStatus(str, enum.Enum):
@@ -131,6 +132,31 @@ class User(Base):
     organization = relationship("Organization", back_populates="users")
 
 
+class EmployeeEnrollmentCode(Base):
+    """
+    Issued by SOC Admin for employee enrollment.
+    Links restricted employee access to the administrator's organization
+    using an 8-character secret code (no employee password required).
+    """
+    __tablename__ = "employee_enrollment_codes"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    organization_id = Column(String(36), ForeignKey("organizations.id"), nullable=False)
+    created_by_user_id = Column(String(36), ForeignKey("users.id"), nullable=True)
+    code = Column(String(32), unique=True, nullable=False, index=True)
+    employee_email = Column(String(255), nullable=False)
+    employee_name = Column(String(255), nullable=True)
+    department = Column(String(255), nullable=True)
+    is_active = Column(Boolean, nullable=False, default=True)
+    scan_count = Column(Integer, nullable=False, default=0)
+    report_count = Column(Integer, nullable=False, default=0)
+    last_used_at = Column(DateTime(timezone=True), nullable=True)
+    invitation_sent_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), default=_now, nullable=False)
+
+    organization = relationship("Organization")
+
+
 # --------------------------------------------------------------------------
 # Investigation / AnalysisRun
 # --------------------------------------------------------------------------
@@ -160,10 +186,15 @@ class Investigation(Base):
     )
 
     created_by_user_id = Column(String(36), ForeignKey("users.id"), nullable=False)
+    reported_by_employee = Column(String(255), nullable=True)
+    employee_code_id = Column(String(36), ForeignKey("employee_enrollment_codes.id"), nullable=True)
+    employee_notes = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), default=_now, nullable=False)
     updated_at = Column(DateTime(timezone=True), default=_now, onupdate=_now, nullable=False)
 
     organization = relationship("Organization", back_populates="investigations")
+    employee_code = relationship("EmployeeEnrollmentCode")
+
     analysis_runs = relationship(
         "AnalysisRun", back_populates="investigation",
         foreign_keys="AnalysisRun.investigation_id",

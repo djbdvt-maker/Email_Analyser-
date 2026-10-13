@@ -36,7 +36,7 @@ def export_chain_of_custody(
         raise HTTPException(status_code=404, detail="No evidence artifact found")
 
     try:
-        with open(artifact.storage_path, "rb") as f:
+        with open(str(artifact.storage_path), "rb") as f:
             eml_bytes = f.read()
     except Exception:
         raise HTTPException(status_code=500, detail="Original EML file missing from storage")
@@ -64,7 +64,7 @@ def export_chain_of_custody(
     
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
-        zip_file.writestr(artifact.original_filename, eml_bytes)
+        zip_file.writestr(str(artifact.original_filename), eml_bytes)
         zip_file.writestr("report.json", report_bytes)
         zip_file.writestr("manifest.sha256", manifest_bytes)
     

@@ -2,7 +2,7 @@ import logging
 import threading
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, UploadFile, File, Query, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db, SessionLocal
@@ -25,25 +25,30 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/v1/investigations", tags=["investigations"])
 
+MAX_ARTIFACT_BYTES = 25 * 1024 * 1024  # 25MB ceiling
+_PIPELINE_SEMAPHORE = threading.Semaphore(4)  # Limit concurrent SQLite write pipelines
+
 
 def _run_pipeline_worker(investigation_id: str, artifact_id: str, run_id: str, user_id: str):
-    worker_db = SessionLocal()
-    try:
-        worker_user = worker_db.get(User, user_id)
-        if not worker_user:
-            logger.error(f"User {user_id} not found in background pipeline worker")
-            return
-        execute_analysis_pipeline(
-            worker_db,
-            user=worker_user,
-            investigation_id=investigation_id,
-            artifact_id=artifact_id,
-            run_id=run_id,
-        )
-    except Exception as exc:
-        logger.error(f"Background analysis pipeline error for run {run_id}: {exc}", exc_info=True)
-    finally:
-        worker_db.close()
+    with _PIPELINE_SEMAPHORE:
+        worker_db = SessionLocal()
+        try:
+            worker_user = worker_db.get(User, user_id)
+            if not worker_user:
+                logger.error(f"User {user_id} not found in background pipeline worker")
+                return
+            execute_analysis_pipeline(
+                worker_db,
+                user=worker_user,
+                investigation_id=investigation_id,
+                artifact_id=artifact_id,
+                run_id=run_id,
+            )
+        except Exception as exc:
+            logger.error(f"Background analysis pipeline error for run {run_id}: {exc}", exc_info=True)
+        finally:
+            worker_db.close()
+
 
 
 @router.post("", response_model=InvestigationOut, status_code=201)
@@ -123,7 +128,16 @@ async def upload_artifact(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    content = await file.read()
+    chunks = bytearray()
+    while chunk := await file.read(1024 * 1024):
+        chunks.extend(chunk)
+        if len(chunks) > MAX_ARTIFACT_BYTES:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail="Artifact exceeds maximum allowable size (25MB)",
+            )
+    content = bytes(chunks)
+
     return evidence_service.ingest_artifact(
         db,
         user=user,
@@ -146,6 +160,7 @@ def list_artifacts(
 @router.post("/{investigation_id}/analyze", response_model=AnalysisResponse, status_code=202)
 def start_analysis(
     investigation_id: str,
+    background_tasks: BackgroundTasks,
     artifact_id: Optional[str] = Query(None),
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
@@ -153,7 +168,7 @@ def start_analysis(
     inv = investigation_service.get_investigation(db, user=user, investigation_id=investigation_id)
 
     if not artifact_id:
-        artifacts = evidence_service.list_artifacts(db, user=user, investigation_id=inv.id)
+        artifacts = evidence_service.list_artifacts(db, user=user, investigation_id=str(inv.id))
         if not artifacts:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -161,21 +176,22 @@ def start_analysis(
             )
         target_artifact = artifacts[-1]
     else:
-        target_artifact = evidence_service.get_artifact(db, user=user, investigation_id=inv.id, artifact_id=artifact_id)
+        target_artifact = evidence_service.get_artifact(db, user=user, investigation_id=str(inv.id), artifact_id=artifact_id)
 
-    run = analysis_run_service.create_analysis_run(db, user=user, investigation_id=inv.id, artifact_id=target_artifact.id)
+    run = analysis_run_service.create_analysis_run(db, user=user, investigation_id=str(inv.id), artifact_id=str(target_artifact.id))
     db.commit()
 
-    t = threading.Thread(
-        target=_run_pipeline_worker,
-        args=(inv.id, target_artifact.id, run.id, user.id),
-        daemon=True,
+    background_tasks.add_task(
+        _run_pipeline_worker,
+        str(inv.id),
+        str(target_artifact.id),
+        str(run.id),
+        str(user.id),
     )
-    t.start()
 
     return AnalysisResponse(
-        investigation_id=inv.id,
-        analysis_run_id=run.id,
+        investigation_id=str(inv.id),
+        analysis_run_id=str(run.id),
         status="QUEUED",
     )
 

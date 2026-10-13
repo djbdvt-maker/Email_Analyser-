@@ -79,6 +79,8 @@ def main():
     parser.add_argument("--frontend-port", type=int, default=None, help="Frontend port (default: auto-select 5173+)")
     parser.add_argument("--no-browser", action="store_true", help="Do not open browser automatically")
     parser.add_argument("--doctor", action="store_true", help="Run system doctor checks before starting")
+    parser.add_argument("--remote", action="store_true", help="Enable secure public HTTPS tunnel for remote multi-network testing")
+    parser.add_argument("--public-url", type=str, default=None, help="Custom public URL if hosted on a server or existing domain")
     args = parser.parse_args()
 
     print("=" * 76)
@@ -116,12 +118,26 @@ def main():
     else:
         print("    [NOTE] Ollama resident model warming up or using deterministic offline fallback.")
 
-    # 4. Environment setup
+    # 4. Remote Tunnel Setup (if requested)
+    public_url = args.public_url or os.getenv("PUBLIC_URL")
+    tunnel_proc = None
+    processes = []
+
+    if args.remote and not public_url:
+        from scripts.tunnel import start_public_tunnel
+        tunnel_proc, public_url = start_public_tunnel(backend_port)
+        if tunnel_proc:
+            processes.append(tunnel_proc)
+
+    # 5. Environment setup
     env = os.environ.copy()
     env["PORT"] = str(backend_port)
-    env["VITE_API_URL"] = f"http://localhost:{backend_port}"
-
-    processes = []
+    if public_url:
+        env["PUBLIC_URL"] = public_url
+        env["PORTAL_BASE_URL"] = public_url
+        env["VITE_API_URL"] = public_url
+    else:
+        env["VITE_API_URL"] = f"http://localhost:{backend_port}"
 
     def shutdown(signum=None, frame=None):
         print("\n[*] Shutting down HopZero services cleanly...")
@@ -182,9 +198,15 @@ def main():
     dashboard_url = f"http://localhost:{frontend_port}"
     print(f"\n============================================================================")
     print(f"  HopZero Forensic Platform is running:")
-    print(f"  - SOC Dashboard:   {dashboard_url}")
-    print(f"  - Backend API:     http://127.0.0.1:{backend_port}")
-    print(f"  - OpenAPI Docs:    http://127.0.0.1:{backend_port}/docs")
+    print(f"  - SOC Admin Dashboard:  {dashboard_url}")
+    print(f"  - Backend API:          http://127.0.0.1:{backend_port}")
+    if public_url:
+        print(f"  - 🌐 Remote Public URL:  {public_url}")
+        print(f"  - 🌐 Employee Portal:    {public_url}/portal")
+        print(f"  - 🌐 Extension Hub URL:  {public_url}")
+    else:
+        print(f"  - Employee Portal:      {dashboard_url}/portal")
+    print(f"  - OpenAPI Docs:         http://127.0.0.1:{backend_port}/docs")
     print(f"  Press Ctrl+C to stop all services cleanly.")
     print(f"============================================================================\n")
 

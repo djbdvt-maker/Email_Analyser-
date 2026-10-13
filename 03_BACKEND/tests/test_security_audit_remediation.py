@@ -187,3 +187,14 @@ def test_api_key_role_assigned_as_analyst(monkeypatch, db_session, org):
 
     user = get_current_user(token="test-api-key-999", db=db_session)
     assert user.role == UserRole.ANALYST
+
+
+def test_api_key_role_never_escalates_to_admin(monkeypatch, db_session, org):
+    """Even if an ADMIN user is created first, API key auth cannot escalate to ADMIN."""
+    import app.security
+    admin_user = _make_user(db_session, org, "first_admin@acme.test", role=UserRole.ADMIN)
+    monkeypatch.setattr(app.security.settings, "hopzero_api_key", "test-api-key-999")
+
+    user = get_current_user(token="test-api-key-999", db=db_session)
+    assert user.id != admin_user.id
+    assert user.role == UserRole.ANALYST

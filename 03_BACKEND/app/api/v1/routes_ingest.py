@@ -14,9 +14,9 @@ import subprocess
 import sys
 from typing import Optional, Tuple
 try:
-    import jwt
+    import jwt  # type: ignore
 except ImportError:
-    from jose import jwt
+    from jose import jwt  # type: ignore
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Header, Request, Response, status, BackgroundTasks
 from sqlalchemy.orm import Session
 
@@ -61,9 +61,13 @@ def _authenticate_ingest_caller(
         
         # Innovative Extension Authentication Support (API Key fallback)
         if settings.hopzero_api_key and secrets.compare_digest(token, settings.hopzero_api_key):
-            user = db.query(User).filter(User.is_active == True).first()
+            from app.models import Organization, UserRole
+            user = (
+                db.query(User)
+                .filter(User.is_active == True, User.role == UserRole.ANALYST)
+                .first()
+            )
             if not user:
-                from app.models import Organization, UserRole
                 org = db.query(Organization).first()
                 if not org:
                     org = Organization(name="SIH Demo Organization")
@@ -86,7 +90,7 @@ def _authenticate_ingest_caller(
             user_id = payload.get("sub")
             if user_id:
                 user = db.get(User, user_id)
-                if user and user.is_active:
+                if user is not None and bool(getattr(user, "is_active", False)):
                     return user, False
         except Exception as e:
             pass
@@ -171,18 +175,21 @@ async def ingest_email(
             response.status_code = status.HTTP_200_OK
             inv = db.get(Investigation, existing.investigation_id)
             
-            run_id = inv.current_analysis_run_id if inv else None
-            if not run_id and inv:
+            run_id = getattr(inv, "current_analysis_run_id", None) if inv else None
+            if run_id is None and inv is not None:
                 from app.models import AnalysisRun
                 latest_run = db.query(AnalysisRun).filter(AnalysisRun.investigation_id == inv.id).order_by(AnalysisRun.created_at.desc()).first()
                 if latest_run:
                     run_id = latest_run.id
 
+            inv_status = getattr(inv, "status", None)
+            status_val = str(inv_status.value) if inv_status is not None else "AWAITING_ANALYSIS"
+
             return IngestResponse(
-                investigation_id=existing.investigation_id,
-                artifact_id=existing.id,
-                analysis_run_id=run_id,
-                status=inv.status.value if inv else "AWAITING_ANALYSIS",
+                investigation_id=str(existing.investigation_id),
+                artifact_id=str(existing.id),
+                analysis_run_id=str(run_id) if run_id is not None else None,
+                status=status_val,
                 idempotent_replay=True,
             )
 
@@ -195,7 +202,7 @@ async def ingest_email(
     artifact = evidence_service.ingest_artifact(
         db,
         user=user,
-        investigation_id=inv.id,
+        investigation_id=str(inv.id),
         filename=file.filename or "message.eml",
         mime_type=file.content_type or "message/rfc822",
         content=content,
@@ -204,18 +211,20 @@ async def ingest_email(
     )
 
     run_id = None
-    final_status = inv.status.value
+    inv_status = getattr(inv, "status", None)
+    final_status = str(inv_status.value) if inv_status is not None else "AWAITING_ANALYSIS"
 
     # 5. Run pipeline if requested
     if auto_analyze:
-        run = create_analysis_run(db, user=user, investigation_id=inv.id, artifact_id=artifact.id)
-        run_id = run.id
+        run = create_analysis_run(db, user=user, investigation_id=str(inv.id), artifact_id=str(artifact.id))
+        run_id = str(run.id)
         import os
         if "PYTEST_CURRENT_TEST" in os.environ:
             from app.services.pipeline_service import execute_analysis_pipeline
-            execute_analysis_pipeline(db, user=user, investigation_id=inv.id, artifact_id=artifact.id, run_id=run.id)
+            execute_analysis_pipeline(db, user=user, investigation_id=str(inv.id), artifact_id=str(artifact.id), run_id=str(run.id))
             db.refresh(inv)
-            final_status = inv.status.value
+            inv_status_refreshed = getattr(inv, "status", None)
+            final_status = str(inv_status_refreshed.value) if inv_status_refreshed is not None else "AWAITING_ANALYSIS"
         else:
             backend_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
             env = os.environ.copy()
@@ -223,9 +232,10 @@ async def ingest_email(
                 env["PYTHONPATH"] = backend_dir
             log_path = os.path.join(backend_dir, "subprocess_pipeline.log")
             # Open file in append mode; close after Popen inherits the handle
+            user_id_arg = str(user.id) if user else "SYSTEM"
             with open(log_path, "a") as f:
                 subprocess.Popen(
-                    [sys.executable, "-m", "app.run_pipeline_script", str(user.id), str(inv.id), str(artifact.id), str(run.id)],
+                    [sys.executable, "-m", "app.run_pipeline_script", user_id_arg, str(inv.id), str(artifact.id), str(run.id)],
                     cwd=backend_dir,
                     env=env,
                     stdout=f,
@@ -234,9 +244,9 @@ async def ingest_email(
             final_status = "AWAITING_ANALYSIS"
 
     return IngestResponse(
-        investigation_id=inv.id,
-        artifact_id=artifact.id,
-        analysis_run_id=run_id,
+        investigation_id=str(inv.id),
+        artifact_id=str(artifact.id),
+        analysis_run_id=str(run_id) if run_id else None,
         status=final_status,
         idempotent_replay=False,
     )

@@ -15,10 +15,10 @@ from fastapi import Depends, Header, HTTPException, status
 import bcrypt
 from fastapi.security import OAuth2PasswordBearer
 try:
-    import jwt
-    from jwt.exceptions import PyJWTError as JWTError
+    import jwt  # type: ignore
+    from jwt.exceptions import PyJWTError as JWTError  # type: ignore
 except ImportError:
-    from jose import jwt, JWTError
+    from jose import jwt, JWTError  # type: ignore
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
@@ -55,6 +55,59 @@ def create_access_token(*, user_id: str, organization_id: str, role: str) -> str
     return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
 
 
+def create_employee_token(*, code_id: str, organization_id: str, employee_email: str, employee_name: Optional[str] = None) -> str:
+    """Creates a scoped 30-day JWT token for an enrolled employee with restricted EMPLOYEE role."""
+    expire = datetime.now(timezone.utc) + timedelta(days=30)
+    payload = {
+        "sub": code_id,
+        "org_id": organization_id,
+        "role": "EMPLOYEE",
+        "employee_email": employee_email,
+        "employee_name": employee_name or employee_email,
+        "is_employee": True,
+        "exp": expire,
+    }
+    return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
+
+
+def get_current_employee(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db),
+) -> dict:
+    """Dependency validating an employee session token."""
+    try:
+        payload = jwt.decode(token, settings.jwt_secret_key, algorithms=[settings.jwt_algorithm])
+        if not payload.get("is_employee") or payload.get("role") != "EMPLOYEE":
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Not an employee session token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        code_id = payload.get("sub")
+        org_id = payload.get("org_id")
+        if not code_id or not org_id:
+            raise _credentials_exception()
+    except JWTError:
+        raise _credentials_exception()
+
+    from app.models import EmployeeEnrollmentCode
+    enrollment = db.get(EmployeeEnrollmentCode, code_id)
+    if not enrollment or not bool(getattr(enrollment, "is_active", False)):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Employee access code has expired or been revoked",
+        )
+
+    return {
+        "enrollment": enrollment,
+        "code_id": code_id,
+        "organization_id": org_id,
+        "employee_email": enrollment.employee_email,
+        "employee_name": enrollment.employee_name or enrollment.employee_email,
+        "department": enrollment.department,
+    }
+
+
 def _credentials_exception() -> HTTPException:
     return HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -69,11 +122,16 @@ def get_current_user(
 ) -> User:
     # Extension API Key Authentication Support
     if settings.hopzero_api_key and secrets.compare_digest(token, settings.hopzero_api_key):
-        # Fallback for the extension: authenticate with Analyst role (least privilege)
-        user = db.query(User).filter(User.is_active == True).first()
+        from app.models import Organization, UserRole
+        # Ensure API key callers strictly bind to Analyst role (least privilege)
+        # Prevents privilege escalation to ADMIN or SUPERADMIN accounts.
+        user = (
+            db.query(User)
+            .filter(User.is_active == True, User.role == UserRole.ANALYST)
+            .first()
+        )
         if not user:
-            # Auto-create a default analyst if none exists (handles fresh installs gracefully)
-            from app.models import Organization, UserRole
+            # Auto-create a default analyst service user if none exists (handles fresh installs gracefully)
             org = db.query(Organization).first()
             if not org:
                 org = Organization(name="SIH Demo Organization")
@@ -100,7 +158,7 @@ def get_current_user(
         raise _credentials_exception()
 
     user = db.get(User, user_id)
-    if user is None or not user.is_active:
+    if user is None or not bool(getattr(user, "is_active", False)):
         raise _credentials_exception()
     return user
 
@@ -122,7 +180,7 @@ def assert_same_org(user: User, resource_organization_id: str) -> None:
     service function that loads a row owned by an organization must
     call this before returning it to a route handler.
     """
-    if user.organization_id != resource_organization_id:
+    if str(user.organization_id) != str(resource_organization_id):
         # 404 instead of 403 to avoid confirming the resource exists
         # in another org.
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Not found")

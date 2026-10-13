@@ -39,6 +39,7 @@ storage/artifacts/*
 !storage/artifacts/.gitkeep
 03_BACKEND/storage/artifacts/*
 !03_BACKEND/storage/artifacts/.gitkeep
+storage/bin/
 
 
 # Logs

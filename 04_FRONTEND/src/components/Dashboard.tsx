@@ -184,7 +184,26 @@ export const Dashboard: React.FC<DashboardProps> = ({ investigations, onSelect }
             <tbody>
               {displayInvestigations.slice(0, 15).map(inv => (
                 <tr key={inv.investigationId} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                  <td style={{ padding: '0.75rem 0.5rem', fontFamily: 'monospace' }}>{inv.investigationId.substring(0,8)}...</td>
+                  <td style={{ padding: '0.75rem 0.5rem' }}>
+                    <div style={{ fontFamily: 'monospace', fontSize: '0.8rem' }}>{inv.title || `${inv.investigationId.substring(0,8)}...`}</div>
+                    {inv.reportedByEmployee && (
+                      <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '3px',
+                        fontSize: '0.68rem',
+                        padding: '1px 6px',
+                        borderRadius: '4px',
+                        background: 'rgba(245, 158, 11, 0.15)',
+                        color: '#fbbf24',
+                        border: '1px solid rgba(245, 158, 11, 0.3)',
+                        marginTop: '3px',
+                        fontWeight: 600
+                      }}>
+                        👤 Reported by {inv.reportedByEmployee}
+                      </span>
+                    )}
+                  </td>
                   <td style={{ padding: '0.75rem 0.5rem' }}>
                     <span style={{ 
                       padding: '0.2rem 0.5rem', 

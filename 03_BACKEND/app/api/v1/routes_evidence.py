@@ -1,5 +1,4 @@
-# pyrefly: ignore [missing-import]
-from fastapi import APIRouter, Depends, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -10,6 +9,8 @@ from app.services import evidence_service
 
 router = APIRouter(prefix="/api/v1/investigations/{investigation_id}/evidence", tags=["evidence"])
 
+MAX_ARTIFACT_BYTES = 25 * 1024 * 1024  # 25MB ceiling
+
 
 @router.post("", response_model=ArtifactOut, status_code=201)
 async def ingest_evidence(
@@ -18,10 +19,18 @@ async def ingest_evidence(
     db: Session = Depends(get_db),
     user: User = Depends(get_current_user),
 ):
-    content = await file.read()
+    chunks = bytearray()
+    while chunk := await file.read(1024 * 1024):
+        chunks.extend(chunk)
+        if len(chunks) > MAX_ARTIFACT_BYTES:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail="ARTIFACT_TOO_LARGE: Artifact exceeds 25MB ceiling.",
+            )
+    content = bytes(chunks)
     return evidence_service.ingest_artifact(
         db, user=user, investigation_id=investigation_id,
-        filename=file.filename, mime_type=file.content_type or "application/octet-stream",
+        filename=file.filename or "evidence.eml", mime_type=file.content_type or "application/octet-stream",
         content=content,
     )
 
@@ -64,7 +73,7 @@ def export_evidence(
         db, user=user, investigation_id=investigation_id, artifact_id=artifact_id
     )
     return EvidenceExportOut(
-        artifact_id=artifact.id,
-        export_bundle_sha256=artifact.export_bundle_sha256,
-        exported_at=artifact.exported_at,
+        artifact_id=str(artifact.id),
+        export_bundle_sha256=str(artifact.export_bundle_sha256),
+        exported_at=getattr(artifact, "exported_at"),
     )

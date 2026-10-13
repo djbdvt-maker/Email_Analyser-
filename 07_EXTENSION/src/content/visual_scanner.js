@@ -1091,7 +1091,11 @@ const EXR = {
     
     const details = document.createElement('div');
     details.className = 'exr-finding-details';
-    details.innerHTML = finding.threats.map(t => `• ${t.reason}`).join('<br>');
+    finding.threats.forEach(t => {
+      const line = document.createElement('div');
+      line.textContent = `• ${t.reason}`;
+      details.appendChild(line);
+    });
     el.appendChild(details);
     
     if (finding.text) {

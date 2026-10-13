@@ -15,6 +15,7 @@ Workflow:
 import io
 import pytest
 from fastapi.testclient import TestClient
+from tests.conftest import auth_headers
 
 CHAIN_SAMPLE_EML = b"""From: "PayPal Account Security" <service@paypal-security-alert.com>
 To: target-user@victim-corp.com
@@ -32,18 +33,19 @@ Visit http://paypal-security-alert.com/restore to reactivate your account immedi
 """
 
 
-def test_botchain_two_tool_chaining(client: TestClient):
+def test_botchain_two_tool_chaining(client: TestClient, user):
     """
     Demonstrates orchestrating Tool 1 (Email Forensics) and Tool 2 (Domain Tool)
     in a BotChain workflow.
     """
+    headers = auth_headers(user)
     # -----------------------------------------------------------------------
     # Step 1: Call Tool 1 (HopZero Email Forensics) to analyze the email
     # -----------------------------------------------------------------------
     tool1_files = {
         "file": ("suspicious_email.eml", io.BytesIO(CHAIN_SAMPLE_EML), "message/rfc822")
     }
-    tool1_res = client.post("/api/v1/tool/analyze-email", files=tool1_files)
+    tool1_res = client.post("/api/v1/tool/analyze-email", files=tool1_files, headers=headers)
     assert tool1_res.status_code == 200
     t1_data = tool1_res.json()
 
@@ -54,7 +56,7 @@ def test_botchain_two_tool_chaining(client: TestClient):
     # -----------------------------------------------------------------------
     # Step 2: Query Tool 1 fine endpoint to extract indicators
     # -----------------------------------------------------------------------
-    ind_res = client.get(f"/api/v1/tool/investigations/{inv_id}/indicators")
+    ind_res = client.get(f"/api/v1/tool/investigations/{inv_id}/indicators", headers=headers)
     assert ind_res.status_code == 200
     ind_data = ind_res.json()
 

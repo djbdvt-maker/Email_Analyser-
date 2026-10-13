@@ -1,0 +1,10 @@
+{
+  "extraPaths": [
+    ".",
+    "01_REGISTRY",
+    "02_FORENSICS",
+    "03_BACKEND",
+    "scripts",
+    "C:\\Users\\HELLO\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages"
+  ]
+}

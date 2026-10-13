@@ -240,45 +240,29 @@ def _get_tool_user(
     request: Request,
     db: Session = Depends(get_db),
 ) -> User:
-    """Authenticates the tool caller via JWT Bearer, API Key, or creates demo user."""
+    """Authenticates the tool caller via JWT Bearer or API Key. Fails closed if unauthenticated."""
     auth_header = request.headers.get("Authorization")
+    if not auth_header or not auth_header.startswith("Bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required: Provide a valid Bearer token or API key in Authorization header",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    token = auth_header[7:].strip()
     settings = get_settings()
 
-    if auth_header and auth_header.startswith("Bearer "):
-        token = auth_header[7:].strip()
-        if settings.hopzero_api_key and secrets.compare_digest(token, settings.hopzero_api_key):
-            user = db.query(User).filter(User.is_active == True).first()
-            if user:
-                return user
-        try:
-            from app.security import get_current_user
-            return get_current_user(token=token, db=db)
-        except Exception:
-            pass
+    if settings.hopzero_api_key and secrets.compare_digest(token, settings.hopzero_api_key):
+        user = db.query(User).filter(User.role.in_([UserRole.ANALYST, UserRole.ADMIN]), User.is_active == True).first()
+        if user:
+            return user
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="No active user found for API key",
+        )
 
-    # Fallback to active user in db if available (for test convenience)
-    existing = db.query(User).filter(User.is_active == True).first()
-    if existing:
-        return existing
-
-    # Create default demo user
-    from app.models import Organization
-    org = db.query(Organization).first()
-    if not org:
-        org = Organization(name="Default Security Org")
-        db.add(org)
-        db.flush()
-    user = User(
-        organization_id=org.id,
-        email="bot@hopzero.local",
-        hashed_password="[TOOL_API_NO_PASSWORD]",
-        role=UserRole.ADMIN,
-        is_active=True,
-    )
-    db.add(user)
-    db.commit()
-    db.refresh(user)
-    return user
+    from app.security import get_current_user
+    return get_current_user(token=token, db=db)
 
 
 # ---------------------------------------------------------------------------
@@ -296,12 +280,15 @@ async def tool_analyze_email(
     Coarse-grained tool endpoint: Ingests .eml message, runs synchronous forensic
     pipeline, and returns immediate verdict, score, floors, and key evidence.
     """
-    content = await file.read()
-    if len(content) > MAX_ARTIFACT_BYTES:
-        raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
-            detail="ARTIFACT_TOO_LARGE: Artifact exceeds 25MB ceiling.",
-        )
+    chunks = bytearray()
+    while chunk := await file.read(1024 * 1024):
+        chunks.extend(chunk)
+        if len(chunks) > MAX_ARTIFACT_BYTES:
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail="ARTIFACT_TOO_LARGE: Artifact exceeds 25MB ceiling.",
+            )
+    content = bytes(chunks)
 
     # 1. Create Investigation
     inv = Investigation(
@@ -316,7 +303,7 @@ async def tool_analyze_email(
     artifact = evidence_service.ingest_artifact(
         db,
         user=user,
-        investigation_id=inv.id,
+        investigation_id=str(inv.id),
         filename=file.filename or "message.eml",
         mime_type=file.content_type or "message/rfc822",
         content=content,
@@ -324,8 +311,8 @@ async def tool_analyze_email(
     )
 
     # 3. Create AnalysisRun & Execute Pipeline synchronously
-    run = create_analysis_run(db, user=user, investigation_id=inv.id, artifact_id=artifact.id)
-    execute_analysis_pipeline(db, user=user, investigation_id=inv.id, artifact_id=artifact.id, run_id=run.id)
+    run = create_analysis_run(db, user=user, investigation_id=str(inv.id), artifact_id=str(artifact.id))
+    execute_analysis_pipeline(db, user=user, investigation_id=str(inv.id), artifact_id=str(artifact.id), run_id=str(run.id))
     db.refresh(inv)
 
     # 4. Fetch Score & Findings
@@ -338,12 +325,13 @@ async def tool_analyze_email(
     body_val = None
     for f in facts:
         p = f.payload if isinstance(f.payload, dict) else {}
-        f_key = p.get("key") or f.fact_type
-        if f.fact_type == "envelope_metadata":
+        ft_str = str(f.fact_type)
+        f_key = str(p.get("key") or ft_str)
+        if ft_str == "envelope_metadata":
             subject_val = p.get("subject") or subject_val
         elif f_key == "subject_normalized":
             subject_val = p.get("value") or subject_val
-        elif f.fact_type == "raw_source_text" and include_body:
+        elif ft_str == "raw_source_text" and include_body:
             body_val = (p.get("text") or "")[:500]
         elif f_key in ("body_text_plain", "raw_source_text") and include_body:
             body_val = (p.get("value") or p.get("text") or "")[:500]
@@ -360,13 +348,19 @@ async def tool_analyze_email(
         for f in findings[:5]
     ]
 
+    has_positive_score = False
+    if score_conc:
+        tot = getattr(score_conc, "total_score", 0) or 0
+        has_positive_score = int(str(tot)) > 0
+
+    run_config = getattr(run, "config", None) if run else None
     return {
         "investigation_id": inv.id,
         "run_id": run.id,
         "verdict": score_conc.verdict if score_conc else "INDETERMINATE",
         "severity": score_conc.severity if score_conc else "LOW",
         "score": score_conc.total_score if score_conc else 0,
-        "confidence": "HIGH" if score_conc and score_conc.total_score > 0 else "MEDIUM",
+        "confidence": "HIGH" if has_positive_score else "MEDIUM",
         "active_floors": score_conc.triggered_floor_codes if score_conc else [],
         "one_line_explanation": score_conc.one_line_explanation if score_conc else "Analysis complete.",
         "top_findings": top_findings,
@@ -379,7 +373,7 @@ async def tool_analyze_email(
             "subject": subject_val,
             "body_preview": body_val if include_body else None,
         },
-        "reproducibility": run.config if run and run.config else None,
+        "reproducibility": run_config,
     }
 
 
@@ -398,7 +392,7 @@ def tool_inspect_headers(
     inv = db.get(Investigation, investigation_id)
     if not inv:
         raise HTTPException(status_code=404, detail="Investigation not found")
-    assert_same_org(user, inv.organization_id)
+    assert_same_org(user, str(inv.organization_id))
 
     facts = db.query(Fact).filter(Fact.investigation_id == investigation_id).all()
 
@@ -409,7 +403,7 @@ def tool_inspect_headers(
 
     for f in facts:
         p = f.payload if isinstance(f.payload, dict) else {}
-        k = p.get("key") or f.fact_type
+        k = str(p.get("key") or f.fact_type)
 
         if k == "routing_hop_trace":
             routing_hops.append(p.get("detail") or p)
@@ -446,7 +440,7 @@ def tool_extract_indicators(
     inv = db.get(Investigation, investigation_id)
     if not inv:
         raise HTTPException(status_code=404, detail="Investigation not found")
-    assert_same_org(user, inv.organization_id)
+    assert_same_org(user, str(inv.organization_id))
 
     facts = db.query(Fact).filter(Fact.investigation_id == investigation_id).all()
 
@@ -457,7 +451,7 @@ def tool_extract_indicators(
 
     for f in facts:
         p = f.payload if isinstance(f.payload, dict) else {}
-        ft = f.fact_type
+        ft = str(f.fact_type)
 
         if ft == "envelope_metadata":
             from_dom = p.get("from_domain")
@@ -505,7 +499,7 @@ def tool_extract_indicators(
 
     findings = db.query(Finding).filter(Finding.investigation_id == investigation_id).all()
     for fd in findings:
-        subj = fd.normalized_subject_or_target or ""
+        subj = str(getattr(fd, "normalized_subject_or_target", "") or "")
         if "@" in subj:
             domains.add(subj.split("@")[-1].lower())
         elif "." in subj and not subj.startswith("."):
@@ -543,9 +537,10 @@ def tool_explain_score(
     inv = db.get(Investigation, investigation_id)
     if not inv:
         raise HTTPException(status_code=404, detail="Investigation not found")
-    assert_same_org(user, inv.organization_id)
+    assert_same_org(user, str(inv.organization_id))
 
-    run_id = inv.current_analysis_run_id
+    run_id_attr = getattr(inv, "current_analysis_run_id", None)
+    run_id = str(run_id_attr) if run_id_attr else None
     if not run_id:
         latest_run = (
             db.query(AnalysisRun)
@@ -554,7 +549,7 @@ def tool_explain_score(
             .first()
         )
         if latest_run:
-            run_id = latest_run.id
+            run_id = str(latest_run.id)
 
     score_conc = None
     if run_id:
@@ -580,8 +575,9 @@ def tool_explain_score(
         category_scores = score_conc.category_breakdown
 
     active_floors_list = []
-    if score_conc and score_conc.triggered_floor_codes:
-        for fc in score_conc.triggered_floor_codes:
+    floors = getattr(score_conc, "triggered_floor_codes", None) if score_conc else None
+    if floors:
+        for fc in floors:
             active_floors_list.append({
                 "code": fc,
                 "minimum_severity": "HIGH",
@@ -604,7 +600,7 @@ def tool_explain_score(
     total = score_conc.total_score if score_conc else 0
     sev = score_conc.severity if score_conc else "LOW"
     verdict = score_conc.verdict if score_conc else "INDETERMINATE"
-    floor_text = f" Floors triggered: {', '.join(score_conc.triggered_floor_codes)}." if score_conc and score_conc.triggered_floor_codes else " No critical floors triggered."
+    floor_text = f" Floors triggered: {', '.join(str(x) for x in floors)}." if floors else " No critical floors triggered."
     explanation_text = f"Calculated score {total}/100 with severity {sev} and verdict {verdict}. Based on {len(findings)} validated findings.{floor_text}"
 
     return {
@@ -635,19 +631,21 @@ def tool_get_investigation_summary(
     inv = db.get(Investigation, investigation_id)
     if not inv:
         raise HTTPException(status_code=404, detail="Investigation not found")
-    assert_same_org(user, inv.organization_id)
+    assert_same_org(user, str(inv.organization_id))
 
-    run_id = inv.current_analysis_run_id
+    run_id_attr = getattr(inv, "current_analysis_run_id", None)
+    run_id = str(run_id_attr) if run_id_attr else None
     score_conc = None
     if run_id:
         score_conc = db.query(ScoreConclusion).filter(ScoreConclusion.analysis_run_id == run_id).first()
 
     findings_count = db.query(Finding).filter(Finding.investigation_id == investigation_id).count()
 
+    inv_created_at = getattr(inv, "created_at", None)
     return {
         "investigation_id": inv.id,
         "status": inv.status.value,
-        "created_at": inv.created_at.isoformat() if inv.created_at else None,
+        "created_at": inv_created_at.isoformat() if inv_created_at is not None else None,
         "latest_score": score_conc.total_score if score_conc else None,
         "latest_severity": score_conc.severity if score_conc else None,
         "latest_verdict": score_conc.verdict if score_conc else None,
@@ -675,7 +673,7 @@ def tool_propose_action(
     inv = db.get(Investigation, investigation_id)
     if not inv:
         raise HTTPException(status_code=404, detail="Investigation not found")
-    assert_same_org(user, inv.organization_id)
+    assert_same_org(user, str(inv.organization_id))
 
     from app.services import action_draft_service
     return action_draft_service.create_action_draft(
@@ -702,10 +700,11 @@ def tool_inspect_reproducibility(
     inv = db.get(Investigation, investigation_id)
     if not inv:
         raise HTTPException(status_code=404, detail="Investigation not found")
-    assert_same_org(user, inv.organization_id)
+    assert_same_org(user, str(inv.organization_id))
     run = None
-    if inv.current_analysis_run_id:
-        run = db.get(AnalysisRun, inv.current_analysis_run_id)
+    cur_run_id = getattr(inv, "current_analysis_run_id", None)
+    if cur_run_id:
+        run = db.get(AnalysisRun, str(cur_run_id))
     if not run:
         run = (
             db.query(AnalysisRun)

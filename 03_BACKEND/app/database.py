@@ -51,10 +51,60 @@ def backup_database_before_upgrade() -> None:
             shutil.copy2(db_path, backup_file)
 
 
+def ensure_default_admin() -> None:
+    """Ensures at least one administrator account exists for initial evaluation."""
+    db = SessionLocal()
+    try:
+        from app.models import User, Organization, UserRole
+        from app.security import hash_password
+        admin = db.query(User).filter(User.email == "admin@hopzero.local").first()
+        if admin is None:
+            org = db.query(Organization).first()
+            if org is None:
+                org = Organization(name="HopZero Primary")
+                db.add(org)
+                db.flush()
+            admin = User(
+                organization_id=org.id,
+                email="admin@hopzero.local",
+                hashed_password=hash_password("changeme123"),
+                role=UserRole.ADMIN,
+                is_active=True,
+            )
+            db.add(admin)
+            db.commit()
+    except Exception:
+        db.rollback()
+    finally:
+        db.close()
+
+
+def migrate_schema_columns() -> None:
+    """Safely adds newly introduced columns to existing SQLite tables if missing."""
+    if not settings.database_url.startswith("sqlite"):
+        return
+    with engine.connect() as conn:
+        from sqlalchemy import text
+        try:
+            res = conn.execute(text("PRAGMA table_info(investigations)"))
+            cols = {row[1] for row in res.fetchall()}
+            if "reported_by_employee" not in cols:
+                conn.execute(text("ALTER TABLE investigations ADD COLUMN reported_by_employee VARCHAR(255)"))
+            if "employee_code_id" not in cols:
+                conn.execute(text("ALTER TABLE investigations ADD COLUMN employee_code_id VARCHAR(36)"))
+            if "employee_notes" not in cols:
+                conn.execute(text("ALTER TABLE investigations ADD COLUMN employee_notes TEXT"))
+            conn.commit()
+        except Exception:
+            pass
+
+
 def init_db_with_backup() -> None:
     """Executes pre-migration backup and initializes database schema on startup."""
     backup_database_before_upgrade()
     Base.metadata.create_all(bind=engine)
+    migrate_schema_columns()
+    ensure_default_admin()
 
 
 def get_db():

@@ -81,6 +81,7 @@ export interface UploadResult {
 
 export interface InvestigationSummary {
   investigationId: string;
+  title?: string;
   createdAt: string; // ISO 8601
   status: InvestigationStatus;
   /** Mirrors the current run's status so the list can show "Analyzing…" without fetching full detail. */
@@ -90,6 +91,7 @@ export interface InvestigationSummary {
   severity: Severity | null;
   verdict: Verdict | null;
   lastAnalysisAt: string | null; // ISO 8601
+  reportedByEmployee?: string | null;
 }
 
 // ============================================================
@@ -463,5 +465,51 @@ export interface EnforcementActionRecord {
   execution_details: any;
   created_at: string;
   updated_at: string;
+}
+
+// ============================================================
+// Employee Portal & Secret Code Enrollment
+// ============================================================
+
+export interface EmployeeCodeItem {
+  id: string;
+  organization_id: string;
+  code: string;
+  employee_email: string;
+  employee_name?: string | null;
+  department?: string | null;
+  is_active: boolean;
+  scan_count: number;
+  report_count: number;
+  last_used_at?: string | null;
+  invitation_sent_at?: string | null;
+  created_at: string;
+  invitation_status?: string | null;
+}
+
+export interface EmployeeTokenResponse {
+  access_token: string;
+  token_type: string;
+  employee_email: string;
+  employee_name?: string | null;
+  department?: string | null;
+  organization_name: string;
+  code: string;
+}
+
+export interface EmployeeScanResult {
+  investigation_id: string;
+  analysis_run_id: string;
+  verdict: 'SAFE' | 'SUSPICIOUS' | 'DANGEROUS' | string;
+  severity: string;
+  score: number;
+  confidence: string;
+  one_line_explanation: string;
+  why_explanation: string;
+  action_recommendation: string;
+  subject: string;
+  sender: string;
+  has_threats: boolean;
+  is_reported?: boolean;
 }
 

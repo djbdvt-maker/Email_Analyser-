@@ -5,10 +5,12 @@ interface Props {
   onUploadClick: () => void;
   onHomeClick: () => void;
   onGuideClick?: () => void;
+  onEmployeesClick?: () => void;
+  onPortalClick?: () => void;
   selectedId: string | null;
 }
 
-export const Navbar: React.FC<Props> = ({ onUploadClick, onHomeClick, onGuideClick, selectedId }) => {
+export const Navbar: React.FC<Props> = ({ onUploadClick, onHomeClick, onGuideClick, onEmployeesClick, onPortalClick, selectedId }) => {
   const [showLogin, setShowLogin] = useState(false);
   const isLoggedInAsRole = () => {
     const token = localStorage.getItem('token');
@@ -53,6 +55,26 @@ export const Navbar: React.FC<Props> = ({ onUploadClick, onHomeClick, onGuideCli
             style={{ padding: '0.4rem 0.65rem' }}
           >
             Guide
+          </button>
+        )}
+        {onEmployeesClick && (
+          <button 
+            className="btn-secondary" 
+            onClick={onEmployeesClick}
+            title="Manage Employee Access & Secret Pairing Codes"
+            style={{ padding: '0.4rem 0.75rem', background: 'rgba(59, 130, 246, 0.15)', color: '#60a5fa', borderColor: 'rgba(59, 130, 246, 0.3)' }}
+          >
+            👥 Employee Codes
+          </button>
+        )}
+        {onPortalClick && (
+          <button 
+            className="btn-secondary" 
+            onClick={onPortalClick}
+            title="Switch to Employee Portal View"
+            style={{ padding: '0.4rem 0.75rem' }}
+          >
+            🔒 Employee Portal
           </button>
         )}
         {selectedId && (
