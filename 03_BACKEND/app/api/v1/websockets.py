@@ -1,7 +1,10 @@
 from collections import defaultdict
 from typing import Dict, List, Optional
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status
-from jose import jwt, JWTError
+try:
+    import jwt  # type: ignore
+    from jwt.exceptions import PyJWTError as JWTError  # type: ignore
+except ImportError:
+    from jose import jwt, JWTError  # type: ignore
 import logging
 
 from app.config import get_settings

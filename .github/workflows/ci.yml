@@ -106,6 +106,7 @@ jobs:
     - name: Publish Pytest Diagnostic Summary
       if: always()
       run: |
+        touch pytest_output.log
         echo "### Pytest Run Summary (${{ runner.os }})" >> $GITHUB_STEP_SUMMARY
         echo '```' >> $GITHUB_STEP_SUMMARY
         tail -n 60 pytest_output.log >> $GITHUB_STEP_SUMMARY
