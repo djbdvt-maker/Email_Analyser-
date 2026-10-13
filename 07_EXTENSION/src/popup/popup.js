@@ -298,32 +298,144 @@ document.addEventListener("DOMContentLoaded", async () => {
           const ingestRes = await client.ingestEmail(emailData);
           currentInvId = ingestRes.investigation_id;
           currentRunId = ingestRes.analysis_run_id;
-          const scoreData = await client.getScore(currentInvId, currentRunId);
-          scanResult = {
-            verdict: scoreData.verdict || "INDETERMINATE",
-            score: scoreData.total_score || 0,
-            severity: scoreData.severity || "LOW",
-            one_line_explanation: scoreData.one_line_explanation || "Analysis complete",
-            action_recommendation: "Review indicators in SOC console."
-          };
-        }
-        renderScanResults(scanResult);
-        document.getElementById("run-status").innerText = "COMPLETED";
-      } catch (networkOrServerError) {
-        console.warn("Backend server offline, triggering Autonomous Offline Scanner:", networkOrServerError);
-        const offlineResult = runAutonomousLocalScan(emailData);
-        offlineResult.one_line_explanation += " [⚡ Offline Engine]";
-        renderScanResults(offlineResult);
-        document.getElementById("run-status").innerText = "AUTONOMOUS (OFFLINE)";
-        // Cache email data for 1-click report queue
-        window._lastExtractedEmail = emailData;
-      }
+  function safeSetText(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.innerText = val !== undefined && val !== null ? String(val) : "";
+  }
 
-    } catch (e) {
-      document.getElementById("run-status").innerText = `ERROR: ${e.message}`;
-      document.getElementById("progress-container").classList.add("hidden");
+  async function displayResults(runId) {
+    try {
+      const scoreData = await client.getScore(currentInvId, runId);
+      const findingsData = await client.getFindings(currentInvId, runId);
+      
+      document.getElementById("results-container").classList.remove("hidden");
+      safeSetText("res-verdict-title", scoreData.verdict);
+      safeSetText("res-score-pill", `${scoreData.total_score} / 100`);
+      safeSetText("res-explanation", scoreData.one_line_explanation || scoreData.conclusion_text);
+      safeSetText("res-recommendation", scoreData.why_explanation || "Review findings in SOC console.");
+      
+      const ul = document.getElementById("res-findings");
+      if (ul) {
+        ul.innerHTML = "";
+        findingsData.forEach(f => {
+          const li = document.createElement("li");
+          li.innerText = `[${f.qualification_code}] ${f.supporting_text}`;
+          ul.appendChild(li);
+        });
+      }
+    } catch(e) {
+      console.error(e);
     }
-  });
+  }
+
+  function pollRun(runId, isNewRun = false) {
+    let attempts = 0;
+    const pollingInterval = setInterval(async () => {
+      attempts++;
+      if (attempts > 30) {
+        clearInterval(pollingInterval);
+        return;
+      }
+      try {
+        const run = await client.getAnalysisRun(currentInvId, runId);
+        const status = run.status;
+        document.getElementById("run-status").innerText = status;
+        if (status === "COMPLETED") {
+          clearInterval(pollingInterval);
+          if (isNewRun) {
+            displayComparison(currentRunId, runId);
+          } else {
+            displayResults(runId);
+          }
+        } else if (status === "FAILED" || status === "CANCELLED") {
+          clearInterval(pollingInterval);
+        }
+      } catch(e) {
+        // continue polling
+      }
+    }, 1500);
+  }
+
+  const feedbackBtn = document.getElementById("feedback-btn");
+  if (feedbackBtn) {
+    feedbackBtn.addEventListener("click", async () => {
+      document.getElementById("run-status").innerText = "AWAITING_FEEDBACK";
+      try {
+        const fb = await client.submitFeedback(currentInvId, currentRunId, "PHISHING_REPORTED", "Actually, I think this is phishing.");
+        const newRunId = fb.new_analysis_run_id;
+        document.getElementById("run-status").innerText = "REANALYZING";
+        pollRun(newRunId, true);
+      } catch(e) {
+        console.error(e);
+      }
+    });
+  }
+
+  async function displayComparison(oldRun, newRun) {
+    try {
+      safeSetText("comp-old-run", oldRun.substring(0, 8) + "...");
+      safeSetText("comp-new-run", newRun.substring(0, 8) + "...");
+      const comp = await client.compareRuns(currentInvId, oldRun, newRun);
+      const compareBox = document.getElementById("compare-container");
+      if (compareBox) compareBox.classList.remove("hidden");
+      safeSetText("comp-score-delta", comp.score_delta);
+      safeSetText("comp-severity-change", comp.severity_changed ? "Changed" : "Unchanged");
+      safeSetText("comp-verdict-change", comp.verdict_changed ? "Changed" : "Unchanged");
+      loadEnforcement();
+    } catch(e) {
+      console.error(e);
+    }
+  }
+
+  let selectedAction = null;
+  let selectedTarget = null;
+  async function loadEnforcement() {
+    try {
+      const opts = await client.getEnforcementOptions(currentInvId);
+      const enfContainer = document.getElementById("enforcement-container");
+      if (enfContainer) enfContainer.classList.remove("hidden");
+      const ul = document.getElementById("enforcement-options");
+      if (ul) {
+        ul.innerHTML = "";
+        opts.forEach(opt => {
+          const btn = document.createElement("button");
+          btn.innerText = `[ ${opt.action_type} ] ${opt.target}`;
+          btn.className = "warning";
+          btn.onclick = () => {
+            selectedAction = opt.action_type;
+            selectedTarget = opt.target;
+            const authContainer = document.getElementById("auth-container");
+            if (authContainer) authContainer.classList.remove("hidden");
+            safeSetText("auth-target", opt.target);
+            safeSetText("auth-action", opt.action_type);
+          };
+          const li = document.createElement("li");
+          li.appendChild(btn);
+          ul.appendChild(li);
+        });
+      }
+    } catch(e) {
+      console.error(e);
+    }
+  }
+
+  const authBtn = document.getElementById("authorize-btn");
+  if (authBtn) {
+    authBtn.addEventListener("click", async () => {
+      if (!selectedAction || !selectedTarget) return;
+      try {
+        const req = await client.requestEnforcement(currentInvId, selectedAction, selectedTarget);
+        const actionId = req.id;
+        await client.authorizeEnforcement(currentInvId, actionId);
+        const exec = await client.executeEnforcement(currentInvId, actionId);
+        safeSetText("enforcement-status", `Result: ${exec.status}`);
+        const authContainer = document.getElementById("auth-container");
+        if (authContainer) authContainer.classList.add("hidden");
+      } catch(e) {
+        safeSetText("enforcement-status", `Failed: ${e.message}`);
+      }
+    });
+  }
 
   // Instant Visual Scanner Button
   document.getElementById("visual-scan-btn").addEventListener("click", async () => {
