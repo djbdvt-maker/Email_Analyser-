@@ -52,7 +52,7 @@ jobs:
 
     - name: Alert / Report on Drift Failure
       if: failure()
-      uses: actions/github-script@v7
+      uses: actions/github-script@v9
       with:
         script: |
           github.rest.issues.create({
